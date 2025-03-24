@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Homepage from '../components/homepage.vue'
+import Homepage from '../components/userpage.vue'
 
 const routes = [
   {
@@ -7,7 +7,7 @@ const routes = [
     name: 'Home',
     component: Homepage
   },
-  
+
 ]
 
 const router = createRouter({
