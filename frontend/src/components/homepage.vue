@@ -2,76 +2,90 @@
   <div class="homepage">
     <header class="header">
       <div class="logo">
-        <h1>EcoSmart Diet</h1>
+        <h1>FitFlow</h1>
       </div>
       <nav class="nav-menu">
-        <a href="#" class="nav-link active">Home</a>
-        <a href="#" class="nav-link">Weather</a>
-        <a href="#" class="nav-link">Meals</a>
-        <a href="#" class="nav-link">Leaderboard</a>
+        <router-link to="/" class="nav-link">Home</router-link>
+        <router-link to="/weather" class="nav-link">Weather</router-link>
+        <router-link to="/meals" class="nav-link">Meals</router-link>
+        <router-link to="/leaderboard" class="nav-link">Leaderboard</router-link>
       </nav>
     </header>
 
     <main class="main-content">
-      <section class="hero-section">
-        <h2>Make Sustainable Food Choices</h2>
-        <p>Get personalized meal recommendations based on local weather conditions</p>
-        <div class="cta-buttons">
-          <button class="primary-btn">Get Started</button>
-          <button class="secondary-btn">Learn More</button>
-        </div>
-      </section>
-
-      <section class="stats-section">
-        <div class="stat-card">
-          <h3>500+</h3>
-          <p>Eco-friendly Recipes</p>
-        </div>
-        <div class="stat-card">
-          <h3>10K+</h3>
-          <p>Active Users</p>
-        </div>
-        <div class="stat-card">
-          <h3>30%</h3>
-          <p>Average Carbon Reduction</p>
-        </div>
-      </section>
-
-      <section class="features">
-        <div class="feature-card">
-          <div class="feature-icon">🌤️</div>
-          <h3>Weather-Based</h3>
-          <p>Recommendations based on real-time weather data</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🥗</div>
-          <h3>Healthy Choices</h3>
-          <p>Nutritious and sustainable meal options</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🌍</div>
-          <h3>Eco Impact</h3>
-          <p>Track your environmental impact</p>
-        </div>
-      </section>
-
-      <section class="how-it-works">
-        <h2>How It Works</h2>
-        <div class="steps">
-          <div class="step">
-            <div class="step-number">1</div>
-            <h3>Check Weather</h3>
-            <p>We analyze local weather conditions</p>
+      <!-- Weather and Activity Section -->
+      <section class="weather-activity">
+        <div class="weather-card">
+          <h2>Current Weather in Singapore</h2>
+          <div class="weather-info">
+            <span class="temperature">32°C</span>
+            <span class="weather-icon">☀️</span>
+            <p>Sunny, Humidity: 75%</p>
           </div>
-          <div class="step">
-            <div class="step-number">2</div>
-            <h3>Get Recommendations</h3>
-            <p>Receive personalized meal suggestions</p>
+        </div>
+        
+        <div class="activity-recommendations">
+          <h2>Recommended Activities</h2>
+          <div class="activity-cards">
+            <div class="activity-card">
+              <span class="activity-icon">🏊‍♂️</span>
+              <h3>Swimming</h3>
+              <p>Perfect for hot weather!</p>
+              <button class="start-btn">Start Activity</button>
+            </div>
+            <div class="activity-card">
+              <span class="activity-icon">🏃‍♂️</span>
+              <h3>Indoor Running</h3>
+              <p>Beat the heat at the gym</p>
+              <button class="start-btn">Start Activity</button>
+            </div>
           </div>
-          <div class="step">
-            <div class="step-number">3</div>
-            <h3>Track Progress</h3>
-            <p>Monitor your eco-friendly choices</p>
+        </div>
+      </section>
+
+      <!-- Progress Section -->
+      <section class="progress-section">
+        <h2>Your Progress</h2>
+        <div class="progress-cards">
+          <div class="progress-card">
+            <h3>Workouts Completed</h3>
+            <div class="progress-number">12</div>
+            <p>This Week</p>
+          </div>
+          <div class="progress-card">
+            <h3>Calories Burned</h3>
+            <div class="progress-number">2,450</div>
+            <p>This Week</p>
+          </div>
+          <div class="progress-card">
+            <h3>Active Minutes</h3>
+            <div class="progress-number">320</div>
+            <p>This Week</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Meal Recommendations -->
+      <section class="meal-section">
+        <h2>Today's Meal Plan</h2>
+        <div class="meal-cards">
+          <div class="meal-card">
+            <img src="https://placehold.co/200x150" alt="Breakfast" class="meal-image">
+            <h3>Breakfast</h3>
+            <p>Oatmeal with Berries</p>
+            <span class="calories">320 cal</span>
+          </div>
+          <div class="meal-card">
+            <img src="https://placehold.co/200x150" alt="Lunch" class="meal-image">
+            <h3>Lunch</h3>
+            <p>Grilled Chicken Salad</p>
+            <span class="calories">450 cal</span>
+          </div>
+          <div class="meal-card">
+            <img src="https://placehold.co/200x150" alt="Dinner" class="meal-image">
+            <h3>Dinner</h3>
+            <p>Salmon with Quinoa</p>
+            <span class="calories">580 cal</span>
           </div>
         </div>
       </section>
@@ -88,7 +102,7 @@ export default {
   name: 'Homepage',
   data() {
     return {
-      // Add reactive data here if needed
+      // Mock data can be moved here later
     }
   }
 }
@@ -126,118 +140,140 @@ export default {
   padding: 5px 10px;
 }
 
-.nav-link.active {
+.router-link-active {
   color: #42b983;
   border-bottom: 2px solid #42b983;
 }
 
-.nav-link:hover {
-  color: #42b983;
-}
-
-.hero-section {
-  text-align: center;
-  padding: 80px 0;
-  background-color: #f8f9fa;
-  border-radius: 12px;
-  margin: 40px 0;
-}
-
-.cta-buttons {
-  margin-top: 30px;
-  display: flex;
+/* Weather and Activity Section */
+.weather-activity {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
   gap: 20px;
-  justify-content: center;
+  margin: 30px 0;
 }
 
-.primary-btn, .secondary-btn {
-  padding: 12px 24px;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.weather-card {
+  background: linear-gradient(135deg, #00b4db, #0083b0);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
 }
 
-.primary-btn {
-  background-color: #42b983;
+.weather-info {
+  margin-top: 20px;
+}
+
+.temperature {
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.weather-icon {
+  font-size: 40px;
+  margin-left: 10px;
+}
+
+.activity-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.activity-card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.activity-icon {
+  font-size: 32px;
+}
+
+.start-btn {
+  background: #42b983;
   color: white;
   border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
 }
 
-.secondary-btn {
-  background-color: white;
-  color: #42b983;
-  border: 2px solid #42b983;
-}
-
-.stats-section {
-  display: flex;
-  justify-content: space-around;
-  margin: 60px 0;
-}
-
-.stat-card {
-  text-align: center;
-}
-
-.stat-card h3 {
-  color: #42b983;
-  font-size: 36px;
-  margin-bottom: 10px;
-}
-
-.features {
+/* Progress Section */
+.progress-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 30px;
-  margin: 60px 0;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 20px 0;
 }
 
-.feature-card {
-  padding: 30px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+.progress-card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
   text-align: center;
-  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.feature-card:hover {
-  transform: translateY(-5px);
+.progress-number {
+  font-size: 36px;
+  font-weight: bold;
+  color: #42b983;
+  margin: 10px 0;
 }
 
-.feature-icon {
-  font-size: 40px;
-  margin-bottom: 20px;
+/* Meal Section */
+.meal-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 20px 0;
 }
 
-.how-it-works {
-  text-align: center;
-  margin: 60px 0;
+.meal-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.steps {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 40px;
+.meal-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
 }
 
-.step {
-  flex: 1;
-  max-width: 250px;
+.meal-card h3,
+.meal-card p,
+.meal-card .calories {
+  padding: 5px 15px;
 }
 
-.step-number {
-  width: 40px;
-  height: 40px;
-  background-color: #42b983;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-  font-size: 20px;
+.calories {
+  color: #666;
+  font-size: 14px;
+  display: block;
+  padding-bottom: 15px;
+}
+
+h2 {
+  color: #2c3e50;
+  margin: 30px 0 20px;
+}
+
+@media (max-width: 768px) {
+  .weather-activity {
+    grid-template-columns: 1fr;
+  }
+  
+  .progress-cards,
+  .meal-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
 .footer {
@@ -246,34 +282,5 @@ export default {
   margin-top: 60px;
   border-top: 1px solid #eee;
   color: #666;
-}
-
-h2 {
-  color: #2c3e50;
-  margin-bottom: 20px;
-  font-size: 32px;
-}
-
-h3 {
-  color: #2c3e50;
-  margin-bottom: 15px;
-}
-
-p {
-  color: #666;
-  line-height: 1.6;
-}
-
-@media (max-width: 768px) {
-  .steps {
-    flex-direction: column;
-    align-items: center;
-    gap: 30px;
-  }
-  
-  .stats-section {
-    flex-direction: column;
-    gap: 30px;
-  }
 }
 </style>
