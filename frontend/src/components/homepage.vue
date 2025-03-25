@@ -1,15 +1,8 @@
 <template>
   <div class="homepage">
     <header class="header">
-      <div class="logo">
-        <h1>FitFlow</h1>
-      </div>
-      <nav class="nav-menu">
-        <router-link to="/" class="nav-link">Home</router-link>
-        <router-link to="/weather" class="nav-link">Weather</router-link>
-        <router-link to="/meals" class="nav-link">Meals</router-link>
-        <router-link to="/leaderboard" class="nav-link">Leaderboard</router-link>
-      </nav>
+      <Logo />
+      <NavBar />
     </header>
 
     <main class="main-content">
@@ -98,8 +91,15 @@
 </template>
 
 <script>
+import NavBar from './NavBar.vue';
+import Logo from './Logo.vue';
+
 export default {
   name: 'Homepage',
+  components: {
+    NavBar,
+    Logo
+  },
   data() {
     return {
       // Mock data can be moved here later
