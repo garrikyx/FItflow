@@ -46,7 +46,7 @@ def callback(ch, method, properties, body):
         # Send email to user (mocked with a hardcoded email for demo)
         subject = "Monthly Health Summary"
         body = message['content']
-        recipient_email = "shihua.kwok.2023@scis.smu.edu.sg"  # Replace with actual user email
+        recipient_email = "zephanchin123@gmail.com"  # Replace with actual user email
         send_email_via_gmail(subject, body, recipient_email)  # Send using Gmail
 
     # Handle Calorie Update Message

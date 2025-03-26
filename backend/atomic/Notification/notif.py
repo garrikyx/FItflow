@@ -6,6 +6,7 @@ import json
 import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import timezone
+import report
 
 app = Flask(__name__)
 
@@ -24,19 +25,20 @@ def publish_message(message):
 
 # Scheduled Task: Send Monthly Summary
 def send_monthly_summary():
-    today = datetime.datetime.today()
-    if today.day == 28:  # Assuming 28th to be safe for all months
+        today = datetime.datetime.today()
+    # if today.day == 28:  # Assuming 28th to be safe for all months
+        content = report.get_monthly_data()
         message = {
             "type": "monthly_summary",
-            "content": "Your monthly health summary is ready!",
+            "content": content,
             "timestamp": today.isoformat(),
         }
         publish_message(message)
 
 # Start Scheduler
 scheduler = BackgroundScheduler(timezone=timezone("Asia/Singapore"))
-scheduler.add_job(send_monthly_summary, 'cron', day=28, hour=0, minute=0)
-# scheduler.add_job(send_monthly_summary, 'interval', seconds=10)
+# scheduler.add_job(send_monthly_summary, 'cron', day=28, hour=0, minute=0)
+scheduler.add_job(send_monthly_summary, 'interval', seconds=5)
 scheduler.start()
 
 # API Endpoint: Notify Friends on Calorie Update
