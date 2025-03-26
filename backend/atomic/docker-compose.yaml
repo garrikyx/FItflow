@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  activitylog:
+    build:
+      context: ./ActivityLog
+    container_name: activitylog-service
+    ports:
+      - "5001:5000"
+    restart: unless-stopped
+
+  notification:
+    build:
+      context: ./Notification
+    container_name: notification-service
+    ports:
+      - "5002:5000"
+    restart: unless-stopped
+
+  leaderboards:
+    build:
+      context: ./Leaderboards
+    container_name: leaderboards-service
+    ports:
+      - "5003:5000"
+    restart: unless-stopped
+
+  user:
+    build:
+      context: ./User
+    container_name: user-service
+    ports:
+      - "5004:5000"
+    restart: unless-stopped
