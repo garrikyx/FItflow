@@ -3,7 +3,7 @@
     <nav class="nav-menu">
       <router-link to="/" class="nav-link">Home</router-link>
       <router-link to="/weather" class="nav-link">Weather</router-link>
-      <router-link to="/meals" class="nav-link">Meals</router-link>
+      <!-- <router-link to="/meals" class="nav-link">Meals</router-link> -->
       <router-link to="/leaderboard" class="nav-link">Leaderboard</router-link>
     </nav>
   </template>
