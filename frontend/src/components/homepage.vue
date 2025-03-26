@@ -58,30 +58,7 @@
         </div>
       </section>
 
-      <!-- Meal Recommendations -->
-      <section class="meal-section">
-        <h2>Today's Meal Plan</h2>
-        <div class="meal-cards">
-          <div class="meal-card">
-            <img src="https://placehold.co/200x150" alt="Breakfast" class="meal-image">
-            <h3>Breakfast</h3>
-            <p>Oatmeal with Berries</p>
-            <span class="calories">320 cal</span>
-          </div>
-          <div class="meal-card">
-            <img src="https://placehold.co/200x150" alt="Lunch" class="meal-image">
-            <h3>Lunch</h3>
-            <p>Grilled Chicken Salad</p>
-            <span class="calories">450 cal</span>
-          </div>
-          <div class="meal-card">
-            <img src="https://placehold.co/200x150" alt="Dinner" class="meal-image">
-            <h3>Dinner</h3>
-            <p>Salmon with Quinoa</p>
-            <span class="calories">580 cal</span>
-          </div>
-        </div>
-      </section>
+      
     </main>
 
     <footer class="footer">
