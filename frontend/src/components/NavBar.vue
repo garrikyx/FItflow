@@ -5,12 +5,29 @@
       <router-link to="/weather" class="nav-link">Weather</router-link>
       <!-- <router-link to="/meals" class="nav-link">Meals</router-link> -->
       <router-link to="/leaderboard" class="nav-link">Leaderboard</router-link>
+      <div v-if="isLoggedIn">
+        <button @click="logout">Logout</button>
+      </div>
+      <div v-else>
+        <router-link to="/authentication">Login</router-link>
+      </div>
     </nav>
   </template>
   
   <script>
   export default {
-    name: 'NavBar'
+    name: 'NavBar',
+    computed: {
+      isLoggedIn() {
+        return !!localStorage.getItem('user')
+      }
+    },
+    methods: {
+      logout() {
+        localStorage.removeItem('user')
+        this.$router.push('/authentication')
+      }
+    }
   }
   </script>
   

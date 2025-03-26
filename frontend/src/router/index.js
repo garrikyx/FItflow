@@ -3,7 +3,7 @@ import Homepage from '../components/homepage.vue'
 import WeatherRecc from '../components/weatherrecc.vue'
 import MealRecc from '../components/mealrecc.vue'
 import Leaderboard from '../components/leaderboard.vue'
-
+import Authentication from '../components/authentication.vue'
 const routes = [
   {
     path: '/',
@@ -25,7 +25,12 @@ const routes = [
     path: '/leaderboard',
     name: 'Leaderboard',
     component: Leaderboard
-  }
+  },
+  {
+    path: '/authentication',
+    name: 'Authentication',
+    component: Authentication
+  },
 ]
 
 const router = createRouter({

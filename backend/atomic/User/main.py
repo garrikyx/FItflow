@@ -2,13 +2,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from os import environ
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
 CORS(app)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = (
-     environ.get("dbURL") or "mysql+mysqlconnector://root:root@localhost:3306/user"
+    environ.get("dbURL") or "mysql+mysqlconnector://root:root@localhost:3306/user"
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
@@ -23,15 +24,19 @@ class User(db.Model):
     name = db.Column(db.String(13))
     weight = db.Column(db.Float(precision=1), nullable=False)
     preferences = db.Column(db.String(64))
+    password = db.Column(db.String(256), nullable=False)
 
 
 
-    def __init__(self, userId, name, weight, preferences):
+    def __init__(self, userId, name, weight, preferences, password):
         self.userId = userId
-        self,name = name
+        self.name = name
         self.weight = weight
         self.preferences = preferences
+        self.password = password
 
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
     def json(self):
         return {
@@ -102,6 +107,75 @@ def create_user(userId):
 
     return jsonify({"code": 201, "data": user.json()}), 201
 
+#UPDATE USER DETAILS
+@app.route("/user/<string:userId>", methods=["PUT"])
+def update_user(userId):
+    user = db.session.scalar(db.select(User).filter_by(userId=userId))
+    
+    if not user:
+        return jsonify({
+            "code": 404,
+            "data": {"userId": userId},
+            "message": "User not found."
+        }), 404
+
+    data = request.get_json()
+    
+    try:
+        if 'name' in data:
+            user.name = data['name']
+        if 'weight' in data:
+            user.weight = data['weight']
+        if 'preferences' in data:
+            user.preferences = data['preferences']
+        if 'password' in data:
+            user.password = generate_password_hash(data['password'])
+            
+        db.session.commit()
+    except Exception as e:
+        print("Exception:{}".format(str(e)))
+        return jsonify({
+            "code": 500,
+            "data": {"userId": userId},
+            "message": "An error occurred updating the user."
+        }), 500
+
+    return jsonify({
+        "code": 200,
+        "data": user.json(),
+        "message": "User updated successfully."
+    })
+
+#DELETE USER
+@app.route("/user/<string:userId>", methods=["DELETE"])
+def delete_user(userId):
+    user = db.session.scalar(db.select(User).filter_by(userId=userId))
+    
+    if not user:
+        return jsonify({
+            "code": 404,
+            "data": {"userId": userId},
+            "message": "User not found."
+        }), 404
+
+    try:
+        db.session.delete(user)
+        db.session.commit()
+    except Exception as e:
+        print("Exception:{}".format(str(e)))
+        return jsonify({
+            "code": 500,
+            "data": {"userId": userId},
+            "message": "An error occurred deleting the user."
+        }), 500
+
+    return jsonify({
+        "code": 200,
+        "data": {"userId": userId},
+        "message": "User deleted successfully."
+    })
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()  
     app.run(host="0.0.0.0", port=5000, debug=True)
