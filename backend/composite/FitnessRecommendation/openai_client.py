@@ -9,14 +9,28 @@ client = OpenAI(
     base_url="https://api.groq.com/openai/v1"  
 )
 
-def get_recommendation(user_data, activity_log, weather):
+def get_recommendation(user_data, activity_log, weather,summary_stats):
     prompt = f"""
-Based on this user profile: {user_data}
-And recent activity history: {activity_log}
-And current weather: {weather}
+    The user is trying to stay fit. Based on their profile, recent activity, and current weather, provide a personalized recommendation (maximum 5 sentences).
 
-Recommend a suitable outdoor or indoor exercise with sunscreen suggestion if needed. Be concise and friendly.
-"""
+    👤 User Info:
+    - ID: {user_data['id']}
+    - Name: {user_data.get('name')}
+    - Recent activity history: {activity_log}
+    - Preferences: {', '.join(user_data.get('preferences', []))}
+
+    🏃 Weekly Activity Summary:
+    - Total sessions: {summary_stats['total_sessions']}
+    - Total minutes: {summary_stats['total_minutes']}
+    - Average intensity: {summary_stats['avg_intensity']}
+
+    🌤️ Current Weather in their location:
+    {weather}
+
+    Please provide(max 5 sentences):
+    - A motivational yet practical recommendation.
+    - Whether they should rest, continue, or push harder.
+    """
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",  
