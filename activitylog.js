@@ -1,24 +1,27 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const admin = require('firebase-admin');
-const serviceAccount = require('./firebase-service-account.json');
+const { MongoClient, ObjectId } = require('mongodb');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
-// Initialize Firebase
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+// MongoDB connection
+const uri = 'mongodb://localhost:27017';
+const client = new MongoClient(uri);
+let db;
+let activitiesCollection;
 
-const db = admin.firestore();
+async function connectToDatabase() {
+  await client.connect();
+  db = client.db('activitylogger');
+  activitiesCollection = db.collection('activities');
+  console.log('Connected to MongoDB');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
-
-// Collection reference
-const activitiesCollection = db.collection('activities');
 
 // Swagger definition
 const swaggerOptions = {
@@ -43,38 +46,14 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Routes
-/**
- * @swagger
- * /activity/{userId}:
- *   get:
- *     summary: Get user activities
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- */
-
 app.get('/activity/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const snapshot = await activitiesCollection
-      .where('userId', '==', userId)
-      .orderBy('timestamp', 'desc')
-      .get();
     
-    if (snapshot.empty) {
-      return res.status(200).json([]);
-    }
-    
-    const activities = [];
-    snapshot.forEach(doc => {
-      activities.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
+    const activities = await activitiesCollection
+      .find({ userId })
+      .sort({ timestamp: -1 })
+      .toArray();
     
     res.status(200).json(activities);
   } catch (error) {
@@ -98,13 +77,13 @@ app.post('/activity', async (req, res) => {
       duration,
       intensity,
       caloriesBurned,
-      timestamp: admin.firestore.FieldValue.serverTimestamp()
+      timestamp: new Date()
     };
     
-    const docRef = await activitiesCollection.add(activity);
+    const result = await activitiesCollection.insertOne(activity);
     
     res.status(201).json({
-      id: docRef.id,
+      id: result.insertedId,
       ...activity
     });
   } catch (error) {
@@ -113,12 +92,14 @@ app.post('/activity', async (req, res) => {
   }
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Activity Log microservice running on port ${PORT}`);
-});
+
+(async () => {
+  await connectToDatabase();
+  app.listen(PORT, () => {
+    console.log(`Activity Log microservice running on port ${PORT}`);
+  });
+})().catch(console.error);
