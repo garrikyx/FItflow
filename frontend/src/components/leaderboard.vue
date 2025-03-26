@@ -198,6 +198,12 @@ export default {
   border-bottom: 1px solid #eee;
 }
 
+.main-content {
+  flex: 1; /* Take up remaining space */
+  overflow-y: auto; /* Allow scrolling if content overflows */
+  padding: 20px;
+}
+
 .logo h1 {
   color: #2c3e50;
   font-size: 24px;
