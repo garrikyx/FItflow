@@ -22,8 +22,8 @@
             <button class="secondary-btn">Learn More</button>
           </div>
         </section> -->
-        <div class="report">This month's exercise report: <button class="just-right">📃📩</button></div>
-        <div class="report">Month by month report: <button class="just-right">📃📩</button></div>
+        <!-- <div class="report">This month's exercise report: <button class="just-right">📃📩</button></div>
+        <div class="report">Month by month report: <button class="just-right">📃📩</button></div> -->
         <div class="monthly-stats">Monthly Stats:</div>
         <section class="stats-section">
           <div class="stat-card">

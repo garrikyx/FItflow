@@ -5,6 +5,7 @@ import pika
 import json
 import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
+from pytz import timezone
 
 app = Flask(__name__)
 
@@ -28,13 +29,14 @@ def send_monthly_summary():
         message = {
             "type": "monthly_summary",
             "content": "Your monthly health summary is ready!",
-            "timestamp": today.isoformat()
+            "timestamp": today.isoformat(),
         }
         publish_message(message)
 
 # Start Scheduler
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(timezone=timezone("Asia/Singapore"))
 scheduler.add_job(send_monthly_summary, 'cron', day=28, hour=0, minute=0)
+# scheduler.add_job(send_monthly_summary, 'interval', seconds=10)
 scheduler.start()
 
 # API Endpoint: Notify Friends on Calorie Update
