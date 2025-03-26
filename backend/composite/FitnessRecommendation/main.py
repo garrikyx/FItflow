@@ -3,18 +3,25 @@ import requests
 from weather_client import get_weather_data
 from openai_client import get_recommendation  
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 load_dotenv()
 
 app = Flask(__name__)
 
 #USER_SERVICE_URL = "http://user:5004/user"
-#ACTIVITY_LOG_URL = "http://activitylog:5001/activity"
+ACTIVITY_LOG_URL = "http://activitylog:5001/activity"
 
 USER_SERVICE_URL = "http://localhost:5004/user"
 ACTIVITY_LOG_URL = "http://localhost:5001/activity"
 
+
+def compute_average_intensity(activities):
+    intensity_scale = {"low": 1, "medium": 2, "high": 3}
+    total = sum(intensity_scale.get(a.get("intensity", "").lower(), 1) for a in activities)
+    return round(total / len(activities), 2) if activities else 0
 @app.route('/recommendation', methods=['GET'])
+
 def recommend():
     user_id = request.args.get('userId')
     location = request.args.get('location', 'Singapore')
@@ -26,11 +33,6 @@ def recommend():
         "preferences": ["Lose Weight"]
     }
 
-    # --- Hard coded Activity Log lol ---
-    activity_log = [
-        {"exerciseType": "yoga", "duration": 30, "intensity": "low", "caloriesBurned": 120},
-        {"exerciseType": "walk", "duration": 20, "intensity": "low", "caloriesBurned": 90}
-    ]
 
     # 1. Fetch weather
     weather = get_weather_data(location)
@@ -42,10 +44,28 @@ def recommend():
     # 3. Fetch activity log
     #activity_resp = requests.get(f"{ACTIVITY_LOG_URL}/{user_id}")
     #activity_log = activity_resp.json()
+    try:
+        activity_resp = requests.get(f"{ACTIVITY_LOG_URL}/{user_id}")
+        activity_resp.raise_for_status()
+        activity_log = activity_resp.json()
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Failed to fetch activity log: {str(e)}"}), 500
+    
+    one_week_ago = datetime.utcnow() - timedelta(days=7)
+    recent_activities = [
+        a for a in activity_log
+        if datetime.fromisoformat(a['timestamp']) > one_week_ago
+    ]
+
+    summary_stats = {
+        "total_sessions": len(recent_activities),
+        "total_minutes": sum(a['duration'] for a in recent_activities),
+        "avg_intensity": compute_average_intensity(recent_activities)
+    }
    
 
     # 4. Generate recommendation using Groq via openai_client
-    advice = get_recommendation(user_data, activity_log, weather)
+    advice = get_recommendation(user_data, activity_log, weather,summary_stats)
 
     return jsonify({
         "recommendation": advice,
