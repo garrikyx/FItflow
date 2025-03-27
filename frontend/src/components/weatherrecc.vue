@@ -1,5 +1,5 @@
 <template>
-  <div class="weather-page">
+  <div class="weatherrecc">
     <header class="header">
       <Logo />
       <NavBar />
@@ -129,36 +129,48 @@ export default {
 </script>
 
 <style scoped>
-.weather-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.weatherrecc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 100vh;
+  background: #333;
 }
 
 .header {
+  position: relative;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 0;
-  border-bottom: 1px solid #eee;
+  padding: 20px 80px;
+  background: #333;
+  border-bottom: 1px solid #444;
 }
 
-.logo-link {
-  text-decoration: none;
-}
-
-.router-link-active {
-  color: #42b983;
-  border-bottom: 2px solid #42b983;
+.main-content {
+  position: relative;
+  width: 100%;
+  padding: 40px 80px;
+  background: #333;
 }
 
 /* Weather Section */
 .weather-section {
+  position: relative;
+  width: 100%;
   background: linear-gradient(135deg, #00b4db, #0083b0);
   color: white;
   padding: 30px;
   border-radius: 20px;
-  margin: 30px 0;
+  margin-bottom: 30px;
 }
 
 .location-header {
@@ -166,15 +178,6 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-}
-
-.location-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  color: white;
-  cursor: pointer;
 }
 
 .weather-details {
@@ -194,6 +197,7 @@ export default {
 .temperature {
   font-size: 64px;
   font-weight: bold;
+  color: white;
 }
 
 .weather-icon {
@@ -217,20 +221,25 @@ export default {
 }
 
 /* Tips Section */
+.tips-section {
+  position: relative;
+  width: 100%;
+  margin-bottom: 30px;
+}
+
 .tips-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
-  margin: 20px 0;
 }
 
 .tip-card {
-  display: flex;
-  align-items: center;
-  background: white;
+  background: #444;
   padding: 20px;
   border-radius: 15px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  color: white;
 }
 
 .tip-icon {
@@ -239,18 +248,22 @@ export default {
 }
 
 /* Goals Section */
+.goals-section {
+  position: relative;
+  width: 100%;
+}
+
 .goals-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
-  margin: 20px 0;
 }
 
 .goal-card {
-  background: white;
+  background: #444;
   padding: 20px;
   border-radius: 15px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: white;
 }
 
 .goal-header {
@@ -266,36 +279,59 @@ export default {
 }
 
 .progress-bar {
-  background: #eee;
+  background: #555;
   height: 8px;
   border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 10px;
 }
 
 .progress {
   background: #42b983;
   height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease;
 }
 
 .goal-stats {
-  color: #666;
-  font-size: 14px;
+  color: #ccc;
 }
 
+/* Text Colors */
 h2 {
-  color: #2c3e50;
-  margin: 30px 0 20px;
+  color: white;
+  margin-bottom: 20px;
 }
 
 h3 {
-  color: #2c3e50;
+  color: white;
   margin: 0;
 }
 
+p {
+  color: white;
+}
+
+/* Buttons */
+.location-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: white;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .header,
+  .main-content {
+    padding: 20px 40px;
+  }
+}
+
 @media (max-width: 768px) {
+  .header,
+  .main-content {
+    padding: 20px;
+  }
+
   .weather-details {
     grid-template-columns: 1fr;
   }
@@ -308,5 +344,17 @@ h3 {
   .forecast-item {
     min-width: 80px;
   }
+  
+}
+
+/* Add after the header styles */
+:deep(.logo h1) {
+    color: #42b983;  
+    font-size: 24px;
+}
+
+:deep(.logo a) {
+    color: #42b983;
+    text-decoration: none;
 }
 </style> 

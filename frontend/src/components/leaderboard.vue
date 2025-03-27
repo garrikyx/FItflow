@@ -1,11 +1,10 @@
 <template>
-  <div class="leaderboard-page">
+  <div class="leaderboard">
     <header class="header">
       <Logo />
       <NavBar />
     </header>
-
-    <main class="main-content">
+    <div class="main-content">
       <!-- Friends Leaderboard Section -->
       <section class="leaderboard-section">
         <div class="section-header">
@@ -161,7 +160,7 @@
           </div>
         </div>
       </section>
-    </main>
+    </div>
   </div>
 </template>
 
@@ -184,28 +183,98 @@ export default {
 </script>
 
 <style scoped>
-.leaderboard-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.leaderboard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 100vh;
+  background: #333;
 }
 
 .header {
+  position: relative;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 0;
-  border-bottom: 1px solid #eee;
+  padding: 20px 80px;
+  background: #333;
+  border-bottom: 1px solid #444;
 }
 
 .main-content {
-  flex: 1; /* Take up remaining space */
-  overflow-y: auto; /* Allow scrolling if content overflows */
+  position: relative;
+  width: 100%;
+  padding: 40px 80px;
+  background: #333;
+}
+
+.leaderboard-table {
+  background: #444;
+  border-radius: 15px;
+  color: white;
+}
+
+.leaderboard-item {
+  border-bottom: 1px solid #555;
+}
+
+h1, h2, h3, p {
+  color: white;
+}
+
+/* For any card layouts */
+.card-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  gap: 40px;
+}
+
+.card {
+  background: white;
   padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* For grid layouts */
+.grid-container {
+  position: relative;
+  width: 100%;
+  display: grid;
+  gap: 40px;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .header,
+  .main-content {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header,
+  .main-content {
+    padding: 20px;
+  }
+  
+  .card-container {
+    flex-direction: column;
+  }
 }
 
 .logo h1 {
-  color: #2c3e50;
+  color: #42b983;
   font-size: 24px;
 }
 
@@ -522,5 +591,17 @@ export default {
   .date {
     font-size: 14px;
   }
+  
+}
+
+/* Add after the header styles */
+:deep(.logo h1) {
+    color: #42b983;  
+    font-size: 24px;
+}
+
+:deep(.logo a) {
+    color: #42b983;
+    text-decoration: none;
 }
 </style> 

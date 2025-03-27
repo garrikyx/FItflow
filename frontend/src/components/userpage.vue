@@ -1,16 +1,8 @@
 <template>
     <div class="userpage">
       <header class="header">
-        <div class="logo">
-          <h1>EcoSmart Diet</h1>
-        </div>
-        <nav class="nav-menu">
-          <a href="#" class="nav-link active">Home</a>
-          <a href="#" class="nav-link">Weather</a>
-          <a href="#" class="nav-link">Meals</a>
-          <a href="#" class="nav-link">Leaderboard</a>
-          <a href="#" class="nav-link">User</a>
-        </nav>
+        <Logo />
+        <NavBar />
       </header>
   
       <main class="main-content">
@@ -103,20 +95,51 @@
   </script>
   
   <style scoped>
-  .userpage {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
-  
+
+  .userpage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    min-height: 100vh;
+    background: #333;
+  }
+
   .header {
+    position: relative;
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 0;
-    border-bottom: 1px solid #eee;
+    padding: 20px 80px;
+    background: #333;
+    border-bottom: 1px solid #444;
   }
-  
+
+  .main-content {
+    position: relative;
+    width: 100%;
+    padding: 40px 80px;
+    background: #333;
+  }
+
+  /* User profile cards */
+  .profile-card {
+    background: #444;
+    padding: 30px;
+    border-radius: 15px;
+    color: white;
+  }
+
+  h1, h2, h3, p {
+    color: white;
+  }
+
   .logo h1 {
     color: #2c3e50;
     font-size: 24px;
@@ -312,6 +335,21 @@
       flex-direction: column;
       gap: 30px;
     }
+
+    .header, .main-content {
+      padding: 20px;
+    }
+  }
+
+  /* Add after the header styles */
+  :deep(.logo h1) {
+    color: #42b983;  
+    font-size: 24px;
+  }
+
+  :deep(.logo a) {
+    color: #42b983;
+    text-decoration: none;
   }
   </style>
   

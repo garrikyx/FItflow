@@ -167,17 +167,47 @@ export default {
 </script>
 
 <style scoped>
-.meal-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.mealrecc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 100vh;
+  background: #333;
 }
 
 .header {
+  position: relative;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 0;
+  padding: 20px 80px;
+  background: #333;
+  border-bottom: 1px solid #444;
+}
+
+.main-content {
+  position: relative;
+  width: 100%;
+  padding: 40px 80px;
+  background: #333;
+}
+
+.meal-card {
+  background: #444;
+  border-radius: 15px;
+  color: white;
+}
+
+h1, h2, h3, p {
+  color: white;
 }
 
 .logo-link {
@@ -215,13 +245,6 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 30px;
   margin: 20px 0;
-}
-
-.meal-card {
-  background: white;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .meal-header {
@@ -337,5 +360,20 @@ export default {
   .nutrition-cards {
     grid-template-columns: 1fr;
   }
+
+  .header, .main-content {
+    padding: 20px;
+  }
+}
+
+/* Add after the header styles */
+:deep(.logo h1) {
+    color: #42b983;  
+    font-size: 24px;
+}
+
+:deep(.logo a) {
+    color: #42b983;
+    text-decoration: none;
 }
 </style> 

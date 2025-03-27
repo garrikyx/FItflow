@@ -39,7 +39,7 @@
   
   .nav-link {
     text-decoration: none;
-    color: #333;
+    color: white;
     font-weight: 500;
   }
   

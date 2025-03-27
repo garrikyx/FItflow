@@ -5,7 +5,7 @@
       <NavBar />
     </header>
 
-    <main class="main-content">
+    <div class="main-content">
       <!-- Weather and Activity Section -->
       <section class="weather-activity">
         <div class="weather-card">
@@ -57,9 +57,7 @@
           </div>
         </div>
       </section>
-
-      
-    </main>
+    </div>
 
     <footer class="footer">
       <p>© 2024 EcoSmart Diet. All rights reserved.</p>
@@ -86,178 +84,153 @@ export default {
 </script>
 
 <style scoped>
-.homepage {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.homepage,
+.weatherrecc,
+.userpage,
+.leaderboard,
+.authentication,
+.mealrecc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 100vh;
+  background: #333;
 }
 
 .header {
+  position: relative;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 0;
-  border-bottom: 1px solid #eee;
+  padding: 20px 80px;
+  background: #333;
+  border-bottom: 1px solid #444;
 }
 
-.logo h1 {
-  color: #2c3e50;
-  font-size: 24px;
-}
-
-.nav-menu {
-  display: flex;
-  gap: 30px;
-}
-
-.nav-link {
-  text-decoration: none;
-  color: #333;
-  font-weight: 500;
-  padding: 5px 10px;
-}
-
-.router-link-active {
-  color: #42b983;
-  border-bottom: 2px solid #42b983;
+.main-content {
+  position: relative;
+  width: 100%;
+  padding: 40px 80px;
+  background: #333;
 }
 
 /* Weather and Activity Section */
 .weather-activity {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 20px;
-  margin: 30px 0;
+  position: relative;
+  width: 100%;
+  display: flex;
+  gap: 40px;
 }
 
 .weather-card {
+  width: 300px;
   background: linear-gradient(135deg, #00b4db, #0083b0);
-  color: white;
   padding: 20px;
   border-radius: 15px;
-  text-align: center;
+  color: white;
 }
 
-.weather-info {
-  margin-top: 20px;
-}
-
-.temperature {
-  font-size: 48px;
-  font-weight: bold;
-}
-
-.weather-icon {
-  font-size: 40px;
-  margin-left: 10px;
+.activity-recommendations {
+  flex: 1;
 }
 
 .activity-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  display: flex;
+  gap: 30px;
 }
 
 .activity-card {
-  background: white;
+  flex: 1;
+  background: #444;
   padding: 20px;
   border-radius: 15px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.activity-icon {
-  font-size: 32px;
-}
-
-.start-btn {
-  background: #42b983;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 10px;
 }
 
 /* Progress Section */
 .progress-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin: 20px 0;
+  display: flex;
+  gap: 30px;
 }
 
 .progress-card {
-  background: white;
+  flex: 1;
+  background: #444;
   padding: 20px;
   border-radius: 15px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.progress-number {
-  font-size: 36px;
-  font-weight: bold;
-  color: #42b983;
-  margin: 10px 0;
-}
-
-/* Meal Section */
-.meal-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin: 20px 0;
-}
-
-.meal-card {
-  background: white;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.meal-image {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-}
-
-.meal-card h3,
-.meal-card p,
-.meal-card .calories {
-  padding: 5px 15px;
-}
-
-.calories {
-  color: #666;
-  font-size: 14px;
-  display: block;
-  padding-bottom: 15px;
-}
-
-h2 {
-  color: #2c3e50;
-  margin: 30px 0 20px;
-}
-
-@media (max-width: 768px) {
-  .weather-activity {
-    grid-template-columns: 1fr;
-  }
-  
-  .progress-cards,
-  .meal-cards {
-    grid-template-columns: 1fr;
-  }
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  color: white;
 }
 
 .footer {
+  width: 100%;
+  padding: 20px 80px;
+  border-top: 1px solid #444;
   text-align: center;
-  padding: 20px 0;
-  margin-top: 60px;
-  border-top: 1px solid #eee;
-  color: #666;
+  color: white;
+  background-color: #333;
+}
+
+h1, h2, h3, p {
+  color: white;
+}
+
+@media (max-width: 1024px) {
+  .header,
+  .main-content,
+  .footer {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header,
+  .main-content,
+  .footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .weather-activity,
+  .activity-cards,
+  .progress-cards {
+    flex-direction: column;
+  }
+
+  .weather-card {
+    width: 100%;
+  }
+  :deep(.logo h1) {
+        color: #42b983;  
+        font-size: 24px;
+    }
+
+    :deep(.logo a) {
+        color: #42b983;
+        text-decoration: none;
+    }
+}
+
+/* Add after the header styles */
+:deep(.logo h1) {
+    color: #42b983;  
+    font-size: 24px;
+}
+
+:deep(.logo a) {
+    color: #42b983;
+    text-decoration: none;
 }
 </style>
