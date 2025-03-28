@@ -1,0 +1,30 @@
+services:
+  activitylog:
+    build:
+      context: .
+    container_name: activitylog-service
+    ports:
+      - "5030:5030"
+    restart: unless-stopped
+    environment:
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_HOST: db
+      DB_NAME: activitylog
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: mysql-activitylog
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: activitylog
+    ports:
+      - "3308:3306"  # Optional: maps MySQL externally, change if needed
+    volumes:
+      - activitylog_mysql_data:/var/lib/mysql
+
+volumes:
+  activitylog_mysql_data:

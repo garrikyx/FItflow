@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  fitnessrecommendation:
+    build:
+      context: .
+    container_name: fitnessrecommendation-service
+    ports:
+      - "5050:5050"
+    restart: unless-stopped
+    depends_on:
+      - user-service
+      - activitylog-service
+
+  user-service:
+    build:
+      context: ../../atomic/User
+    container_name: user-service
+    ports:
+      - "5004:5000"
+    restart: unless-stopped
+    environment:
+      dbURL: "mysql+mysqlconnector://root:root@host.docker.internal:3306/user"
+
+  activitylog-service:
+    build:
+      context: ../../atomic/ActivityLog
+    container_name: activitylog-service
+    ports:
+      - "5001:5000"
+    restart: unless-stopped
+    environment:
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_HOST: host.docker.internal
+      DB_NAME: activitylog

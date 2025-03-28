@@ -4,16 +4,14 @@ from weather_client import get_weather_data
 from openai_client import get_recommendation  
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+import os
 
 load_dotenv()
 
 app = Flask(__name__)
 
-#USER_SERVICE_URL = "http://user:5004/user"
-ACTIVITY_LOG_URL = "http://activitylog:5001/activity"
-
-USER_SERVICE_URL = "http://localhost:5004/user"
-ACTIVITY_LOG_URL = "http://localhost:5001/activity"
+USER_SERVICE_URL = "http://user-service:5000/user"
+ACTIVITY_LOG_URL = "http://activitylog-service:5030/activity"
 
 
 def compute_average_intensity(activities):

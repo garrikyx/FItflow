@@ -7,7 +7,6 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# ✅ Environment variables from docker-compose
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "root")
 DB_HOST = os.getenv("DB_HOST", "localhost")
@@ -18,7 +17,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# ✅ ActivityLog model
+
 class ActivityLog(db.Model):
     __tablename__ = "activitylog"
 
@@ -41,7 +40,7 @@ class ActivityLog(db.Model):
             "timestamp": self.timestamp.isoformat()
         }
 
-# ✅ POST /activity
+
 @app.route("/activity", methods=["POST"])
 def log_activity():
     data = request.get_json()
@@ -63,13 +62,13 @@ def log_activity():
 
     return jsonify(activity.json()), 201
 
-# ✅ GET /activity/<userId>
+
 @app.route("/activity/<userId>", methods=["GET"])
 def get_activities(userId):
     activities = ActivityLog.query.filter_by(userId=userId).order_by(ActivityLog.timestamp.desc()).all()
     return jsonify([a.json() for a in activities]), 200
 
-# ✅ Run app
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()  # create table if it doesn't exist
