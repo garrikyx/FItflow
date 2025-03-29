@@ -1,12 +1,16 @@
 # notif.py sends health-related notifications (monthly summaries and calorie updates) to RabbitMQ and schedules tasks.
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../Report')))
 
+import monthly_report
 from flask import Flask, request, jsonify
 import pika
 import json
 import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import timezone
-import report
+
 
 app = Flask(__name__)
 
@@ -27,7 +31,7 @@ def publish_message(message):
 def send_monthly_summary():
         today = datetime.datetime.today()
     # if today.day == 28:  # Assuming 28th to be safe for all months
-        content = report.get_monthly_data()
+        content = monthly_report.get_monthly_data()
         message = {
             "type": "monthly_summary",
             "content": content,
