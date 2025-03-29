@@ -74,3 +74,4 @@ node_modules/
 **/firebase-adminsdk*.json
 *.json.key
 serviceAccountKey.json
+credentials(donotpush).json
