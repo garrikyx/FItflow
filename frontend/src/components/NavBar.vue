@@ -1,7 +1,7 @@
 <!-- frontend/src/components/NavBar.vue -->
 <template>
     <nav class="nav-menu">
-      <router-link to="/" class="nav-link">Home</router-link>
+      <router-link to="/homepage" class="nav-link">Home</router-link>
       <router-link to="/weather" class="nav-link">Weather</router-link>
       <!-- <router-link to="/meals" class="nav-link">Meals</router-link> -->
       <router-link to="/leaderboard" class="nav-link">Leaderboard</router-link>
@@ -9,7 +9,7 @@
         <button @click="logout">Logout</button>
       </div>
       <div v-else>
-        <router-link to="/authentication">Login</router-link>
+        <router-link to="/">Login</router-link>
       </div>
     </nav>
   </template>
@@ -25,7 +25,7 @@
     methods: {
       logout() {
         localStorage.removeItem('user')
-        this.$router.push('/authentication')
+        this.$router.push('/')
       }
     }
   }

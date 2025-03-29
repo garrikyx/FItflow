@@ -21,16 +21,20 @@
           <h2>Recommended Activities</h2>
           <div class="activity-cards">
             <div class="activity-card">
-              <span class="activity-icon">🏊‍♂️</span>
+              <!-- <span class="activity-icon">🏊‍♂️</span>
               <h3>Swimming</h3>
               <p>Perfect for hot weather!</p>
               <button class="start-btn">Start Activity</button>
+              {{ recommendation }}
             </div>
             <div class="activity-card">
               <span class="activity-icon">🏃‍♂️</span>
               <h3>Indoor Running</h3>
               <p>Beat the heat at the gym</p>
               <button class="start-btn">Start Activity</button>
+              {{ recommendation }} -->
+              <div v-if="recommendation">{{ recommendation }}</div>
+              <div v-else>Loading recommendation...</div>
             </div>
           </div>
         </div>
@@ -67,7 +71,9 @@
 
 <script>
 import NavBar from './NavBar.vue';
-import Logo from './Logo.vue';
+import Logo from './logo.vue';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
 export default {
   name: 'Homepage',
@@ -78,6 +84,27 @@ export default {
   data() {
     return {
       // Mock data can be moved here later
+    }
+  }, 
+
+  setup() {  
+    const recommendation = ref(null)
+
+    const getFitnessRecommendation = async () => {
+      try {
+        const response = await axios.get('http://localhost:5050/recommendation') 
+        recommendation.value = response.data.recommendation
+      } catch (error) {
+        recommendation.value = 'Failed to fetch recommendation'
+      }
+    }
+
+    onMounted(() => {
+      getFitnessRecommendation()
+    })
+
+    return {  
+      recommendation
     }
   }
 }

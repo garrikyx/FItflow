@@ -2,7 +2,6 @@
     <div class="authentication">
         <header class="header">
             <Logo />
-            <NavBar />
         </header>
 
         <main class="main-content">
@@ -49,6 +48,17 @@
                                     class="form-input"
                                     v-model="registerData.userId"
                                     placeholder="Create a unique User ID"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="name">Name</label>
+                                <input 
+                                    type="text" 
+                                    id="name" 
+                                    class="form-input"
+                                    v-model="registerData.name"
+                                    placeholder="Enter your name"
                                     required
                                 />
                             </div>
@@ -145,14 +155,14 @@
 </template>
 
 <script>
-import Logo from './Logo.vue'
-import NavBar from './NavBar.vue'
+import Logo from './logo.vue'
+import axios from 'axios';
+
 
 export default {
     name: 'Authentication',
     components: {
         Logo,
-        NavBar
     },
     data() {
         return {
@@ -161,6 +171,7 @@ export default {
             password: '',
             registerData: {
                 userId: '',
+                name: '',
                 password: '',
                 confirmPassword: '',
                 weight: '',
@@ -176,27 +187,19 @@ export default {
         },
         async handleLogin() {
             try {
-                const response = await fetch('http://localhost:5000/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        userId: this.userId,
-                        password: this.password
-                    })
+                const response = await axios.post('http://localhost:5001/login', {
+                    userId: this.userId,
+                    password: this.password
                 });
 
-                const data = await response.json();
-
-                if (data.code === 200) {
-                    localStorage.setItem('user', JSON.stringify(data.data));
+                if (response.data.code === 200) {
+                    localStorage.setItem('user', JSON.stringify(response.data.data));
                     this.$router.push('/homepage');
                 } else {
-                    this.error = data.message;
+                    this.error = response.data.message;
                 }
-            } catch (err) {
-                this.error = 'An error occurred during login';
+            } catch (error) {
+                this.error = error.response?.data?.message || 'An error occurred during login';
             }
         },
         async handleRegister() {
@@ -206,29 +209,22 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:5000/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        userId: this.registerData.userId,
-                        password: this.registerData.password,
-                        weight: parseFloat(this.registerData.weight),
-                        goal: this.registerData.goal
-                    })
+                const response = await axios.post(`http://localhost:5001/user/${this.registerData.userId}`, {
+                    name: this.registerData.name,
+                    weight: parseFloat(this.registerData.weight),
+                    password: this.registerData.password,
+                    goal: this.registerData.goal === 'lose' ? 'Lose Weight' : 'Gain Muscles'
                 });
-
-                const data = await response.json();
-
-                if (data.code === 200) {
-                    this.isLogin = true;  
+                
+                if (response.data.code === 201) {
+                    this.isLogin = true;
                     this.error = 'Registration successful! Please login.';
                 } else {
-                    this.error = data.message;
+                    this.error = response.data.message;
                 }
-            } catch (err) {
-                this.error = 'An error occurred during registration';
+            } catch (error) {
+                console.error('Registration error:', error.response?.data || error);
+                this.error = error.response?.data?.message || 'An error occurred during registration';
             }
         }
     }

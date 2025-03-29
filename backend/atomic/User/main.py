@@ -1,181 +1,233 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
-from os import environ
+import firebase_admin
+from firebase_admin import credentials, firestore
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+import os
+import logging
+
+# Load environment variables
+load_dotenv()
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
 CORS(app)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    environ.get("dbURL") or "mysql+mysqlconnector://root:root@localhost:3306/user"
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
-
-db = SQLAlchemy(app)
-
-
-class User(db.Model):
-    __tablename__ = "user"
-
-    userId = db.Column(db.String(13), primary_key=True)
-    name = db.Column(db.String(13))
-    weight = db.Column(db.Float(precision=1), nullable=False)
-    preferences = db.Column(db.String(64))
-    password = db.Column(db.String(256), nullable=False)
-
-
-
-    def __init__(self, userId, name, weight, preferences, password):
-        self.userId = userId
-        self.name = name
-        self.weight = weight
-        self.preferences = preferences
-        self.password = password
-
-    def check_password(self, password):
-        return check_password_hash(self.password, password)
-
-    def json(self):
-        return {
-            "userId": self.userId,
-            "name": self.name,
-            "weight": self.weight,
-            "preferences": self.preferences,
-            
-        }
+# Initialize Firebase using environment variable
+try:
+    cred = credentials.Certificate(os.getenv('GOOGLE_APPLICATION_CREDENTIALS'))
+    firebase_admin.initialize_app(cred, {
+        'projectId': os.getenv('FIREBASE_PROJECT_ID')
+    })
+    db = firestore.client()
+    logger.info("Firebase initialized successfully")
+except Exception as e:
+    logger.error(f"Firebase initialization error: {str(e)}")
 
 # GET ALL USERS
 @app.route("/user")
 def get_all():
-    users = db.session.scalars(db.select(User)).all()
+    try:
+        users_ref = db.collection('users')
+        users = users_ref.stream()
+        users_list = []
+        for user in users:
+            user_data = user.to_dict()
+            user_data['userId'] = user.id
+            users_list.append(user_data)
 
-    if len(users):
-        return jsonify(
-            {
+        if users_list:
+            return jsonify({
                 "code": 200,
-                "data": {"users": [user.json() for user in users]},
-            }
-        )
-    return jsonify({"code": 404, "message": "There are no users."}), 404
+                "data": {"users": users_list}
+            })
+        return jsonify({"code": 404, "message": "There are no users."}), 404
+    except Exception as e:
+        return jsonify({"code": 500, "message": str(e)}), 500
 
-#GET USER BY USERID
+# GET USER BY USERID
 @app.route("/user/<string:userId>")
 def search_by_userid(userId):
-    user = db.session.scalar(db.select(User).filter_by(userId=userId))
+    try:
+        user_ref = db.collection('users').document(userId)
+        user = user_ref.get()
+        
+        if user.exists:
+            user_data = user.to_dict()
+            user_data['userId'] = user.id
+            return jsonify({"code": 200, "data": user_data})
+        return jsonify({"code": 404, "message": "User not found."}), 404
+    except Exception as e:
+        return jsonify({"code": 500, "message": str(e)}), 500
 
-    if user:
-        return jsonify({"code": 200, "data": user.json()})
-    return jsonify({"code": 404, "message": "User not found."}), 404
-
-
-#CREATE NEW USER
+# CREATE NEW USER
 @app.route("/user/<string:userId>", methods=["POST"])
 def create_user(userId):
-    if db.session.scalar(db.select(User).filter_by(userId=userId)):
-        return (
-            jsonify(
-                {
-                    "code": 400,
-                    "data": {"userId": userId},
-                    "message": "User already exists.",
-                }
-            ),
-            400,
-        )
-
-    data = request.get_json()
-    user = User(userId, **data)
-
     try:
-        db.session.add(user)
-        db.session.commit()
+        # Use the 'users' collection (plural) instead of 'user'
+        user_ref = db.collection('users').document(userId)  # This will use the userId as document ID
+        
+        if user_ref.get().exists:
+            return jsonify({
+                "code": 400,
+                "data": {"userId": userId},
+                "message": "User already exists."
+            }), 400
+
+        data = request.get_json()
+        user_data = {
+            'userId': userId,
+            'name': data.get('name', ''),
+            'weight': data.get('weight'),
+            'password': data.get('password'),
+            'goal': data.get('goal')
+        }
+
+        # Create user document with userId as the document ID
+        user_ref.set(user_data)
+        
+        # Return response without password
+        response_data = user_data.copy()
+        response_data.pop('password', None)
+
+        return jsonify({
+            "code": 201,
+            "data": response_data
+        }), 201
+
     except Exception as e:
-        print("Exception:{}".format(str(e)))
-        return (
-            jsonify(
-                {
-                    "code": 500,
-                    "data": {"userId": userId},
-                    "message": "An error occurred creating the book.",
-                }
-            ),
-            500,
-        )
+        print("Error creating user:", str(e))
+        return jsonify({
+            "code": 500,
+            "data": {"userId": userId},
+            "message": str(e)
+        }), 500
 
-    return jsonify({"code": 201, "data": user.json()}), 201
-
-#UPDATE USER DETAILS
+# UPDATE USER DETAILS
 @app.route("/user/<string:userId>", methods=["PUT"])
 def update_user(userId):
-    user = db.session.scalar(db.select(User).filter_by(userId=userId))
-    
-    if not user:
-        return jsonify({
-            "code": 404,
-            "data": {"userId": userId},
-            "message": "User not found."
-        }), 404
-
-    data = request.get_json()
-    
     try:
-        if 'name' in data:
-            user.name = data['name']
-        if 'weight' in data:
-            user.weight = data['weight']
-        if 'preferences' in data:
-            user.preferences = data['preferences']
+        user_ref = db.collection('users').document(userId)
+        if not user_ref.get().exists:
+            return jsonify({
+                "code": 404,
+                "data": {"userId": userId},
+                "message": "User not found."
+            }), 404
+
+        data = request.get_json()
+        
+        # Hash new password if provided
         if 'password' in data:
-            user.password = generate_password_hash(data['password'])
-            
-        db.session.commit()
+            data['password'] = generate_password_hash(data['password'])
+
+        # Update user in Firebase
+        user_ref.update(data)
+        
+        # Get updated user data
+        updated_user = user_ref.get().to_dict()
+        updated_user.pop('password', None)  # Remove password from response
+        updated_user['userId'] = userId
+
+        return jsonify({
+            "code": 200,
+            "data": updated_user,
+            "message": "User updated successfully."
+        })
+
     except Exception as e:
-        print("Exception:{}".format(str(e)))
         return jsonify({
             "code": 500,
             "data": {"userId": userId},
-            "message": "An error occurred updating the user."
+            "message": str(e)
         }), 500
 
-    return jsonify({
-        "code": 200,
-        "data": user.json(),
-        "message": "User updated successfully."
-    })
-
-#DELETE USER
+# DELETE USER
 @app.route("/user/<string:userId>", methods=["DELETE"])
 def delete_user(userId):
-    user = db.session.scalar(db.select(User).filter_by(userId=userId))
-    
-    if not user:
-        return jsonify({
-            "code": 404,
-            "data": {"userId": userId},
-            "message": "User not found."
-        }), 404
-
     try:
-        db.session.delete(user)
-        db.session.commit()
+        user_ref = db.collection('users').document(userId)
+        if not user_ref.get().exists:
+            return jsonify({
+                "code": 404,
+                "data": {"userId": userId},
+                "message": "User not found."
+            }), 404
+
+        # Delete user from Firebase
+        user_ref.delete()
+
+        return jsonify({
+            "code": 200,
+            "data": {"userId": userId},
+            "message": "User deleted successfully."
+        })
+
     except Exception as e:
-        print("Exception:{}".format(str(e)))
         return jsonify({
             "code": 500,
             "data": {"userId": userId},
-            "message": "An error occurred deleting the user."
+            "message": str(e)
         }), 500
 
-    return jsonify({
-        "code": 200,
-        "data": {"userId": userId},
-        "message": "User deleted successfully."
-    })
+# Add this new endpoint
+@app.route("/login", methods=["POST"])
+def login():
+    try:
+        data = request.get_json()
+        print("Received login request data:", data)  # Debug print
+        
+        userId = data.get('userId')
+        password = data.get('password')
+
+        print(f"Looking for user with ID: {userId}")  # Debug print
+
+        # Try getting the user document directly
+        user_ref = db.collection('users').document(userId)
+        user = user_ref.get()
+
+        if not user.exists:
+            # Debug: List all users to see what's actually in the database
+            all_users = db.collection('users').stream()
+            print("All users in database:")
+            for u in all_users:
+                print(f"User ID: {u.id}")
+                print(f"User data: {u.to_dict()}")
+            
+            return jsonify({
+                "code": 404,
+                "message": "User not found"
+            }), 404
+
+        user_data = user.to_dict()
+        print(f"Found user data: {user_data}")  # Debug print
+
+        # Check password
+        if user_data.get('password') == password:  # For now, direct comparison
+            return jsonify({
+                "code": 200,
+                "message": "Login successful",
+                "data": {
+                    "userId": userId,
+                    "weight": user_data.get('weight'),
+                    "goal": user_data.get('goal')
+                }
+            })
+        else:
+            return jsonify({
+                "code": 401,
+                "message": "Invalid password"
+            }), 401
+
+    except Exception as e:
+        print("Login error:", str(e))
+        return jsonify({
+            "code": 500,
+            "message": str(e)
+        }), 500
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()  
     app.run(host="0.0.0.0", port=5001, debug=True)

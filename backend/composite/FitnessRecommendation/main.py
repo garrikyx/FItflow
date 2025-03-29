@@ -5,10 +5,12 @@ from openai_client import get_recommendation
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import os
+from flask_cors import CORS
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 USER_SERVICE_URL = "http://user-service:5000/user"
 ACTIVITY_LOG_URL = "http://activitylog-service:5030/activity"
