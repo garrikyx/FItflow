@@ -11,7 +11,7 @@ GMAIL_USER = "ecosmart.diet@gmail.com"  # Replace with your Gmail address
 GMAIL_PASSWORD = "hyhv ytts xosm fsij"   # Replace with your Gmail app password
 
 # Connect to RabbitMQ
-connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
 channel = connection.channel()
 channel.queue_declare(queue='notifications')
 
