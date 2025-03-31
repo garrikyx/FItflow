@@ -16,17 +16,14 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-# Get the directory where main.py is located
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# Use the correct filename
-service_account_path = os.path.join(current_dir, "credentials(donotpush).json")
-
-# Initialize Firebase Admin with the correct path
-cred = credentials.Certificate(service_account_path)
-initialize_app(cred)
-
-# Initialize Firestore DB
-db = firestore.client()
+try:
+    cred = credentials.Certificate("./serviceAccountKey.json")
+    initialize_app(cred)
+    db = firestore.client()
+except Exception as e:
+    app.logger.error(f"Firebase initialization error: {str(e)}")
+    # Continue running the app even if Firebase fails to initialize
+    # This allows us to see the error in logs
 
 # GET ALL USERS
 @app.route("/user")

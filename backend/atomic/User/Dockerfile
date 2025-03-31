@@ -1,6 +1,7 @@
-FROM python:3-slim
-WORKDIR /usr/src/app
-COPY requirements.txt ./
-RUN python -m pip install --no-cache-dir -r requirements.txt
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY credentials\(donotpush\).json ./serviceAccountKey.json
 COPY . .
-CMD [ "python", "./main.py" ]
+CMD [ "python", "main.py" ]
