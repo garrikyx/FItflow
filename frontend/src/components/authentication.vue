@@ -52,6 +52,18 @@
                                 />
                             </div>
                             <div class="form-group">
+                                <label for="email">Email</label>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    class="form-input"
+                                    v-model="registerData.email"
+                                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                                    placeholder="Enter your email"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
                                 <label for="name">Name</label>
                                 <input 
                                     type="text" 
@@ -171,6 +183,7 @@ export default {
             password: '',
             registerData: {
                 userId: '',
+                email: '',
                 name: '',
                 password: '',
                 confirmPassword: '',
@@ -210,6 +223,7 @@ export default {
 
             try {
                 const response = await axios.post(`http://localhost:5001/user/${this.registerData.userId}`, {
+                    email: this.registerData.email,
                     name: this.registerData.name,
                     weight: parseFloat(this.registerData.weight),
                     password: this.registerData.password,
@@ -219,6 +233,15 @@ export default {
                 if (response.data.code === 201) {
                     this.isLogin = true;
                     this.error = 'Registration successful! Please login.';
+                    this.registerData = {
+                        userId: '',
+                        email: '',
+                        name: '',
+                        password: '',
+                        confirmPassword: '',
+                        weight: '',
+                        goal: 'lose'
+                    };
                 } else {
                     this.error = response.data.message;
                 }

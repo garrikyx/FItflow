@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, initialize_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
@@ -16,16 +16,17 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-# Initialize Firebase using environment variable
-try:
-    cred = credentials.Certificate(os.getenv('GOOGLE_APPLICATION_CREDENTIALS'))
-    firebase_admin.initialize_app(cred, {
-        'projectId': os.getenv('FIREBASE_PROJECT_ID')
-    })
-    db = firestore.client()
-    logger.info("Firebase initialized successfully")
-except Exception as e:
-    logger.error(f"Firebase initialization error: {str(e)}")
+# Get the directory where main.py is located
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Use the correct filename
+service_account_path = os.path.join(current_dir, "credentials(donotpush).json")
+
+# Initialize Firebase Admin with the correct path
+cred = credentials.Certificate(service_account_path)
+initialize_app(cred)
+
+# Initialize Firestore DB
+db = firestore.client()
 
 # GET ALL USERS
 @app.route("/user")
@@ -67,43 +68,27 @@ def search_by_userid(userId):
 @app.route("/user/<string:userId>", methods=["POST"])
 def create_user(userId):
     try:
-        # Use the 'users' collection (plural) instead of 'user'
-        user_ref = db.collection('users').document(userId)  # This will use the userId as document ID
+        data = request.json
+        user_ref = db.collection('users').document(userId)
         
-        if user_ref.get().exists:
-            return jsonify({
-                "code": 400,
-                "data": {"userId": userId},
-                "message": "User already exists."
-            }), 400
-
-        data = request.get_json()
-        user_data = {
-            'userId': userId,
-            'name': data.get('name', ''),
+        # Store user data
+        user_ref.set({
+            'email': data.get('email'),
+            'name': data.get('name'),
             'weight': data.get('weight'),
-            'password': data.get('password'),
+            'password': data.get('password'),  # In production, hash this!
             'goal': data.get('goal')
-        }
-
-        # Create user document with userId as the document ID
-        user_ref.set(user_data)
-        
-        # Return response without password
-        response_data = user_data.copy()
-        response_data.pop('password', None)
+        })
 
         return jsonify({
             "code": 201,
-            "data": response_data
+            "message": "User created successfully"
         }), 201
 
     except Exception as e:
-        print("Error creating user:", str(e))
         return jsonify({
             "code": 500,
-            "data": {"userId": userId},
-            "message": str(e)
+            "message": f"An error occurred: {str(e)}"
         }), 500
 
 # UPDATE USER DETAILS
