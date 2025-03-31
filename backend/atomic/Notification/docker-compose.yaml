@@ -50,7 +50,7 @@ services:
   flask_app:
     build:
       context: ./app
-      dockerfile: app/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     depends_on:
@@ -61,7 +61,7 @@ services:
   consumer:
     build:
       context: ./consumer
-      dockerfile: consumer/Dockerfile
+      dockerfile: Dockerfile
     depends_on:
       rabbitmq:
         condition: service_healthy
