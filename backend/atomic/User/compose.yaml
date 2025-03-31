@@ -5,4 +5,26 @@ services:
     ports:
       - "5001:5000"
     environment:
-      - dbURL=mysql+mysqlconnector://root:root@host.docker.internal:8889/user 
+      - DATABASE_URL=mysql+mysqlconnector://root:root@db:3306/user
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  db:
+    image: mysql:8.0
+    container_name: user-mysql
+    ports:
+      - "3308:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=user
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+volumes:
+  user_mysql_data: 
