@@ -17,13 +17,21 @@ app = Flask(__name__)
 CORS(app)
 
 try:
-    cred = credentials.Certificate("./serviceAccountKey.json")
+    # Get the directory where main.py is located
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Use absolute path for credentials file
+    cred_path = os.path.join(current_dir, "credentials(donotpush).json")
+    
+    if not os.path.exists(cred_path):
+        raise FileNotFoundError(f"Credentials file not found at: {cred_path}")
+        
+    cred = credentials.Certificate(cred_path)
     initialize_app(cred)
     db = firestore.client()
+    app.logger.info("Firebase initialized successfully")
 except Exception as e:
     app.logger.error(f"Firebase initialization error: {str(e)}")
-    # Continue running the app even if Firebase fails to initialize
-    # This allows us to see the error in logs
+    db = None  # Set db to None so we can check it later
 
 # GET ALL USERS
 @app.route("/user")
@@ -155,40 +163,53 @@ def delete_user(userId):
             "message": str(e)
         }), 500
 
-# Add this new endpoint
+# Update the login endpoint with more logging
 @app.route("/login", methods=["POST"])
 def login():
+    app.logger.debug("Login endpoint called")
     try:
-        data = request.get_json()
-        print("Received login request data:", data)  # Debug print
+        # Log the raw request
+        app.logger.debug(f"Request headers: {request.headers}")
+        app.logger.debug(f"Request data: {request.get_data()}")
         
+        data = request.get_json()
+        app.logger.info(f"Parsed JSON data: {data}")
+        
+        if not data:
+            app.logger.error("No JSON data received")
+            return jsonify({
+                "code": 400,
+                "message": "No data received"
+            }), 400
+
         userId = data.get('userId')
         password = data.get('password')
+        
+        app.logger.debug(f"Login attempt for user: {userId}")
 
-        print(f"Looking for user with ID: {userId}")  # Debug print
+        if not userId or not password:
+            app.logger.error("Missing userId or password")
+            return jsonify({
+                "code": 400,
+                "message": "Missing userId or password"
+            }), 400
 
-        # Try getting the user document directly
+        # Try getting the user document
         user_ref = db.collection('users').document(userId)
         user = user_ref.get()
 
         if not user.exists:
-            # Debug: List all users to see what's actually in the database
-            all_users = db.collection('users').stream()
-            print("All users in database:")
-            for u in all_users:
-                print(f"User ID: {u.id}")
-                print(f"User data: {u.to_dict()}")
-            
+            app.logger.warning(f"User not found: {userId}")
             return jsonify({
                 "code": 404,
                 "message": "User not found"
             }), 404
 
         user_data = user.to_dict()
-        print(f"Found user data: {user_data}")  # Debug print
+        app.logger.debug(f"Found user data: {user_data}")
 
-        # Check password
-        if user_data.get('password') == password:  # For now, direct comparison
+        if user_data.get('password') == password:
+            app.logger.info(f"Successful login for user: {userId}")
             return jsonify({
                 "code": 200,
                 "message": "Login successful",
@@ -199,17 +220,19 @@ def login():
                 }
             })
         else:
+            app.logger.warning(f"Invalid password for user: {userId}")
             return jsonify({
                 "code": 401,
                 "message": "Invalid password"
             }), 401
 
     except Exception as e:
-        print("Login error:", str(e))
+        app.logger.error(f"Login error: {str(e)}", exc_info=True)
         return jsonify({
             "code": 500,
-            "message": str(e)
+            "message": f"Server error: {str(e)}"
         }), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Use environment variable or default to 5000
+    app.run(host="0.0.0.0", port=port, debug=True)

@@ -200,10 +200,22 @@ export default {
         },
         async handleLogin() {
             try {
-                const response = await axios.post('http://localhost:5001/login', {
+                console.log('Attempting login with:', {
                     userId: this.userId,
                     password: this.password
                 });
+
+                const response = await axios.post('http://localhost:5001/login', {
+                    userId: this.userId,
+                    password: this.password
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 5000
+                });
+
+                console.log('Login response:', response.data);
 
                 if (response.data.code === 200) {
                     localStorage.setItem('user', JSON.stringify(response.data.data));
@@ -212,7 +224,17 @@ export default {
                     this.error = response.data.message;
                 }
             } catch (error) {
-                this.error = error.response?.data?.message || 'An error occurred during login';
+                console.error('Login error:', error);
+                
+                if (error.code === 'ECONNABORTED') {
+                    this.error = 'Request timed out. Please try again.';
+                } else if (error.response) {
+                    this.error = error.response.data?.message || 'Login failed';
+                } else if (error.request) {
+                    this.error = 'No response from server. Please try again.';
+                } else {
+                    this.error = 'An error occurred during login';
+                }
             }
         },
         async handleRegister() {
