@@ -1,6 +1,6 @@
 services:
   user-service:
-    image: lynnnnnno/user-service:1.0
+    build: .
     container_name: user-service
     ports:
       - "5001:5000"
