@@ -8,6 +8,6 @@ def get_monthly_data():
     # report = create_workout_report(user_data)
 
     # publish_message(report)  # Publish the message for RabbitMQ to consume and send the email
-    
+    ### use activitylog to get the exercising data ###
     body = "You ran 5km, spent 1 hour exercising, burnt 100 calories"
     return body

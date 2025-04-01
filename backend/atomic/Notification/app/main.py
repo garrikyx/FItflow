@@ -31,6 +31,7 @@ def publish_message(message):
 def send_monthly_summary():
         today = datetime.datetime.today()
     # if today.day == 28:  # Assuming 28th to be safe for all months
+    ### FOR LOOP HERE for all the users in the database and connect to db for email?
         content = monthly_report.get_monthly_data()
         message = {
             "type": "monthly_summary",

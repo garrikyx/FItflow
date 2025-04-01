@@ -44,6 +44,7 @@ def callback(ch, method, properties, body):
     if message["type"] == "monthly_summary":
         print(f"Sending Monthly Summary Email: {message['content']}")
         # Send email to user (mocked with a hardcoded email for demo)
+        ### Edit recipient_email into user email ###
         subject = "Monthly Health Summary"
         body = message['content']
         recipient_email = "zephanchin123@gmail.com"  # Replace with actual user email
