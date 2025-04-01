@@ -1,0 +1,70 @@
+# version: '3.8'
+# services:
+#   rabbitmq:
+#     image: rabbitmq:3-management
+#     ports:
+#       - "5672:5672"
+#       - "15672:15672"
+
+#   main-service:
+#     build: .
+#     depends_on:
+#       - rabbitmq
+#     environment:
+#       - RABBITMQ_HOST=rabbitmq
+#     networks:
+#       - my_network
+#     command: python /usr/src/app/main.py
+
+#   consumer-service:
+#     build: .
+#     depends_on:
+#       - rabbitmq
+#     environment:
+#       - RABBITMQ_HOST=rabbitmq
+#     networks:
+#       - my_network
+#     command: python /usr/src/app/consumer.py
+
+# networks:
+#   my_network:
+#     driver: bridge
+
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5680:5672"
+      - "8080:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+
+  flask_app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  consumer:
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python consumer.py

@@ -11,7 +11,7 @@ GMAIL_USER = "ecosmart.diet@gmail.com"  # Replace with your Gmail address
 GMAIL_PASSWORD = "hyhv ytts xosm fsij"   # Replace with your Gmail app password
 
 # Connect to RabbitMQ
-connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
 channel = connection.channel()
 channel.queue_declare(queue='notifications')
 
@@ -44,6 +44,7 @@ def callback(ch, method, properties, body):
     if message["type"] == "monthly_summary":
         print(f"Sending Monthly Summary Email: {message['content']}")
         # Send email to user (mocked with a hardcoded email for demo)
+        ### Edit recipient_email into user email ###
         subject = "Monthly Health Summary"
         body = message['content']
         recipient_email = "zephanchin123@gmail.com"  # Replace with actual user email
