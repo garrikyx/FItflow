@@ -5,7 +5,7 @@ import os
 import logging
 import requests
 
-from database import app, db, Activity, add_activity
+from database import app, db, Leaderboards, add_activity
 from cache import LeaderboardCache
 
 # Setup logging
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def get_all_activities():
     """Retrieve all activities."""
     try:
-        leaderboards = db.session.scalars(db.select(leaderboards)).all()
+        leaderboards = db.session.scalars(db.select(Leaderboards)).all()
         
         if leaderboards:
             return jsonify({
@@ -78,29 +78,6 @@ def record_activity():
         }), 400
 
 
-@app.route("/activity/<int:activity_id>")
-def find_activity_by_id(activity_id):
-    """Find a specific activity by its ID."""
-    try:
-        activity = db.session.scalar(db.select(Activity).filter_by(id=activity_id))
-        
-        if activity:
-            return jsonify({
-                "code": 200,
-                "data": activity.json()
-            })
-        
-        return jsonify({
-            "code": 404,
-            "message": "Activity not found."
-        }), 404
-    except Exception as e:
-        logger.error(f"Error finding activity: {str(e)}")
-        return jsonify({
-            "code": 500,
-            "message": f"Error finding activity: {str(e)}"
-        }), 500
-
 @app.route("/leaderboard/weekly")
 def get_weekly_leaderboard():
     """Get the current week's leaderboard."""
@@ -152,7 +129,7 @@ def health_check():
     """Health check endpoint."""
     try:
         # Check database connection
-        db.session.execute(db.select(Activity).limit(1))
+        db.session.execute(db.select(Leaderboards).limit(1))
         
         # Check Redis connection
         LeaderboardCache.get_weekly_leaderboard_key()
@@ -168,4 +145,4 @@ def health_check():
         }), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=5005, debug=True)

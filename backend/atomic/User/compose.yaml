@@ -10,7 +10,6 @@ services:
       db:
         condition: service_healthy
     restart: always
-
   db:
     image: mysql:8.0
     container_name: user-mysql
@@ -19,6 +18,9 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=user
+    volumes:
+      - user_mysql_data:/var/lib/mysql
+      - ./users.sql:/docker-entrypoint-initdb.d/users.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 10s
@@ -28,3 +30,4 @@ services:
 
 volumes:
   user_mysql_data: 
+

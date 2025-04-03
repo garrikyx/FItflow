@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import datetime
 import os
+import time
+from sqlalchemy.exc import SQLAlchemyError
 
 app = Flask(__name__)
 CORS(app)
@@ -17,6 +19,12 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
+def check_db_connection():
+    try:
+        db.session.execute("SELECT 1")
+        return True
+    except SQLAlchemyError:
+        return False
 
 class ActivityLog(db.Model):
     __tablename__ = "activitylog"
@@ -27,7 +35,7 @@ class ActivityLog(db.Model):
     duration = db.Column(db.Integer, nullable=False)
     intensity = db.Column(db.String(50), nullable=False)
     caloriesBurned = db.Column(db.Integer, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.now)
 
     def json(self):
         return {
@@ -40,36 +48,83 @@ class ActivityLog(db.Model):
             "timestamp": self.timestamp.isoformat()
         }
 
+@app.route("/health", methods=["GET"])
+def health_check():
+    db_status = "connected" if check_db_connection() else "disconnected"
+    return jsonify({
+        "status": "healthy",
+        "database": db_status,
+        "timestamp": datetime.datetime.now().isoformat()
+    }), 200
+
+@app.route("/activity", methods=["GET"])
+def get_all_activities():
+    if not check_db_connection():
+        return jsonify({"error": "Database connection error"}), 503
+
+    try:
+        activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).all()
+        if not activities:
+            return jsonify({"message": "No activity records found"}), 404
+        return jsonify([a.json() for a in activities]), 200
+    except SQLAlchemyError:
+        return jsonify({"error": "Database error occurred"}), 500
 
 @app.route("/activity", methods=["POST"])
 def log_activity():
+    if not check_db_connection():
+        return jsonify({"error": "Database connection error"}), 503
+
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
     required_fields = ["userId", "exerciseType", "duration", "intensity", "caloriesBurned"]
-
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "Missing fields"}), 400
+        return jsonify({"error": "Missing required fields"}), 400
 
-    activity = ActivityLog(
-        userId=data["userId"],
-        exerciseType=data["exerciseType"],
-        duration=data["duration"],
-        intensity=data["intensity"],
-        caloriesBurned=data["caloriesBurned"]
-    )
+    try:
+        activity = ActivityLog(
+            userId=data["userId"],
+            exerciseType=data["exerciseType"],
+            duration=data["duration"],
+            intensity=data["intensity"],
+            caloriesBurned=data["caloriesBurned"]
+        )
 
-    db.session.add(activity)
-    db.session.commit()
-
-    return jsonify(activity.json()), 201
-
+        db.session.add(activity)
+        db.session.commit()
+        return jsonify(activity.json()), 201
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({"error": "Database error occurred"}), 500
 
 @app.route("/activity/<userId>", methods=["GET"])
 def get_activities(userId):
-    activities = ActivityLog.query.filter_by(userId=userId).order_by(ActivityLog.timestamp.desc()).all()
-    return jsonify([a.json() for a in activities]), 200
+    if not check_db_connection():
+        return jsonify({"error": "Database connection error"}), 503
 
+    try:
+        activities = ActivityLog.query.filter_by(userId=userId).order_by(ActivityLog.timestamp.desc()).all()
+        if not activities:
+            return jsonify({"message": f"No activity records found for user {userId}"}), 404
+        return jsonify([a.json() for a in activities]), 200
+    except SQLAlchemyError:
+        return jsonify({"error": "Database error occurred"}), 500
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()  # create table if it doesn't exist
+    max_retries = 5
+    retry_count = 0
+    while retry_count < max_retries:
+        try:
+            with app.app_context():
+                db.create_all()
+            break
+        except SQLAlchemyError:
+            retry_count += 1
+            if retry_count == max_retries:
+                print("Failed to connect to database after multiple attempts")
+                exit(1)
+            time.sleep(2)
+    
     app.run(host="0.0.0.0", port=5030, debug=True)
