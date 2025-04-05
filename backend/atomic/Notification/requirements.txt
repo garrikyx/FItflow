@@ -1,16 +1,12 @@
-# flask==3.1.0
-# redis==5.2.1
-# Flask-SQLAlchemy==3.1.1
-# mysql-connector-python==9.1.0
-# Flask-Cors==5.0.0
-# requests==2.32.3
-# pika==1.2.0
-# apscheduler==3.7.0
-# pytz==2021.1
+flask==3.1.0
+redis==5.2.1
+Flask-SQLAlchemy==3.1.1
+mysql-connector-python==9.1.0
+Flask-Cors==5.0.0
+requests==2.32.3
+pika==1.2.0
+apscheduler==3.7.0
+pytz==2021.1
 
 
 # python-dotenv==0.20.0
-
-# smtplib
-# email
-# json

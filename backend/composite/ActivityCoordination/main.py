@@ -12,8 +12,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-# Service URLs - can be overridden with environment variables
-USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:5000")
+USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:5001")
 ACTIVITY_LOG_SERVICE_URL = os.getenv("ACTIVITY_LOG_SERVICE_URL", "http://activitylog-service:5030")
 LEADERBOARDS_SERVICE_URL = os.getenv("LEADERBOARDS_SERVICE_URL", "http://leaderboards-service:5005")
 SOCIAL_SERVICE_URL = os.getenv("SOCIAL_SERVICE_URL", "https://personal-ywco1luc.outsystemscloud.com/SocialsService")
@@ -27,19 +26,11 @@ def health_check():
         "timestamp": datetime.now().isoformat()
     }), 200
 
+
 @app.route("/activity", methods=["POST"])
 def coordinate_activity():
-    """
-    Coordinate activity logging across multiple services.
-    1. Get user profile from user service
-    2. Log activity in activity log service
-    3. Get friends from social service
-    4. Update leaderboards for user and friends
-    """
     try:
-        # Get request data
         data = request.get_json()
-        logger.debug(f"Received activity data: {data}")
         
         # Validate required fields
         required_fields = ["userId", "duration", "activityType"]
@@ -54,90 +45,55 @@ def coordinate_activity():
         duration = data.get("duration")
         activity_type = data.get("activityType")
         
-        # 1. Get user profile from user service
-        logger.debug(f"Fetching user profile for user ID: {user_id}")
+        # Get user profile
         user_response = requests.get(f"{USER_SERVICE_URL}/user/{user_id}")
-        
         if user_response.status_code != 200:
-            logger.error(f"Failed to get user profile: {user_response.text}")
             return jsonify({
                 "code": user_response.status_code,
                 "message": f"Failed to get user profile: {user_response.text}"
             }), user_response.status_code
         
         user_data = user_response.json().get("data", {})
-        logger.debug(f"Retrieved user data: {user_data}")
         
-        # Calculate calories burned based on weight, activity type, and duration
-        weight = user_data.get("weight", 70)  # Default to 70kg if not provided
+        # Calculate calories burned
+        weight = user_data.get("weight", 70)
         calories_burned = calculate_calories_burned(weight, activity_type, duration)
         
-        # Calculate intensity based on duration and activity type
-        intensity = calculate_intensity(duration, activity_type)
-        
-        # 2. Log activity in activity log service
-        logger.debug("Logging activity to activity log service")
-        activity_log_data = {
-            "userId": user_id,
-            "exerciseType": activity_type,
-            "duration": duration,
-            "intensity": intensity,
-            "caloriesBurned": calories_burned
-        }
-        
+        # Log activity
         activity_response = requests.post(
             f"{ACTIVITY_LOG_SERVICE_URL}/activity",
-            json=activity_log_data
+            json={
+                "userId": user_id,
+                "exerciseType": activity_type,
+                "duration": duration,
+                "caloriesBurned": calories_burned
+            }
         )
         
         if activity_response.status_code not in [200, 201]:
-            logger.error(f"Failed to log activity: {activity_response.text}")
             return jsonify({
                 "code": activity_response.status_code,
                 "message": f"Failed to log activity: {activity_response.text}"
             }), activity_response.status_code
         
-        logger.debug(f"Activity logged successfully: {activity_response.json()}")
-        
-        # 3. Get friends from social service
-        logger.debug(f"Fetching friends for user ID: {user_id}")
+        # Get friends list from social service
         friends_response = requests.get(f"{SOCIAL_SERVICE_URL}/rest/FriendAPI/Friends/{user_id}")
+        friends = friends_response.json() if friends_response.status_code == 200 else []
         
-        if friends_response.status_code != 200:
-            logger.warning(f"Failed to get friends: {friends_response.text}")
-            friends = []
-        else:
-            friends_data = friends_response.json()
-            friends = [friend.get("Id") for friend in friends_data]
-            logger.debug(f"Retrieved {len(friends)} friends: {friends}")
-        
-        # 4. Update leaderboards for user and friends
-        logger.debug("Updating leaderboards")
-        leaderboard_data = {
-            "user_id": user_id,
-            "calories_burned": calories_burned,
-            "activity_type": activity_type,
-            "timestamp": datetime.now().isoformat()
-        }
-        
+        # Update leaderboards with friends data
         leaderboard_response = requests.post(
             f"{LEADERBOARDS_SERVICE_URL}/leaderboard",
-            json=leaderboard_data
+            json={
+                "user_id": user_id,
+                "calories_burned": calories_burned,
+                "activity_type": activity_type,
+                "friends": friends  
+            }
         )
         
-        if leaderboard_response.status_code not in [200, 201]:
-            logger.error(f"Failed to update leaderboards: {leaderboard_response.text}")
-            return jsonify({
-                "code": leaderboard_response.status_code,
-                "message": f"Failed to update leaderboards: {leaderboard_response.text}"
-            }), leaderboard_response.status_code
-        
-        logger.debug(f"Leaderboards updated successfully: {leaderboard_response.json()}")
-        
-        # Return combined response
         return jsonify({
             "code": 200,
-            "message": "Activity successfully coordinated",
+            "message": "Activity coordinated successfully",
             "data": {
                 "user": user_data,
                 "activity": activity_response.json(),
@@ -146,12 +102,6 @@ def coordinate_activity():
             }
         }), 200
     
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request error: {str(e)}")
-        return jsonify({
-            "code": 500,
-            "message": f"Service communication error: {str(e)}"
-        }), 500
     except Exception as e:
         logger.error(f"Error coordinating activity: {str(e)}")
         return jsonify({

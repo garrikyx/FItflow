@@ -3,7 +3,6 @@ import logging
 from datetime import datetime
 from redis import Redis
 from typing import List, Dict, Optional, Tuple
-import requests
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -49,12 +48,11 @@ class LeaderboardCache:
             if not timestamp:
                 timestamp = datetime.now()
             
-            # Update weekly leaderboard 
             weekly_key = LeaderboardCache.get_weekly_leaderboard_key()
             redis.zincrby(weekly_key, calories_burned, user_id)
             redis.expire(weekly_key, 60 * 60 * 24 * 21)  # 3 weeks
             
-            logger.info(f"Updated weekly leaderboard for user {user_id} with {calories_burned} calories")
+            logger.info(f"Updated weekly leaderboard for user {user_id}")
             return f"activity:{user_id}:{int(timestamp.timestamp())}"
         except Exception as e:
             logger.error(f"Error updating leaderboard: {str(e)}")
@@ -63,97 +61,40 @@ class LeaderboardCache:
             redis.close()
 
     @staticmethod
-    def get_user_from_composite(user_id: str) -> Dict:
-        """Get user information from composite service."""
-        composite_url = os.environ.get("COMPOSITE_SERVICE_URL", "http://composite-service:8000")
-        try:
-            response = requests.get(f"{composite_url}/users/{user_id}")
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error fetching user data from composite service: {str(e)}")
-            # Return basic info if service is unavailable
-            return {"user_id": user_id, "username": f"User-{user_id[:6]}"}
-
-    @staticmethod
-    def get_friends_from_composite(user_id: str) -> List[str]:
-        """Get user's friends from composite service."""
-        composite_url = os.environ.get("COMPOSITE_SERVICE_URL", "http://composite-service:8000")
-        try:
-            response = requests.get(f"{composite_url}/users/{user_id}/friends")
-            response.raise_for_status()
-            return response.json().get("friends", [])
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error fetching friends from composite service: {str(e)}")
-            return []
-
-    @staticmethod
-    def build_friends_leaderboard(user_id: str) -> bool:
-        """Build the initial friends leaderboard for a user."""
+    def update_friends_leaderboard(user_id: str, friends: List[Dict]):
+        """Update friends leaderboards using provided friends list."""
         redis = get_redis()
-        try:
-            # Get friends list from composite service
-            friends_ids = LeaderboardCache.get_friends_from_composite(user_id)
-            
-            # Include the user themself
-            friends_ids.append(user_id)
-            
-            # Get weekly leaderboard key
-            weekly_key = LeaderboardCache.get_weekly_leaderboard_key()
-            friends_key = LeaderboardCache.get_friends_leaderboard_key(user_id)
-            
-            # Add each friend to the leaderboard with their current calories
-            for friend_id in friends_ids:
-                calories = redis.zscore(weekly_key, friend_id) or 0
-                redis.zadd(friends_key, {friend_id: calories})
-            
-            # Set expiration (currently 2 weeks)
-            redis.expire(friends_key, 60 * 60 * 24 * 14)  
-            
-            return True
-        except Exception as e:
-            logger.error(f"Error building friends leaderboard: {str(e)}")
-            return False
-        finally:
-            redis.close()
-
-    @staticmethod
-    def update_friends_leaderboard(user_id: str, calories_burned: float):
-        """Update the friends leaderboard for this user and their friends"""
-        redis = get_redis()
-        try:
-            # Get the user's friends from composite service
-            friends = LeaderboardCache.get_friends_from_composite(user_id)
-            
-            # Update the user's own friends leaderboard
-            user_friends_key = LeaderboardCache.get_friends_leaderboard_key(user_id)
-            redis.zincrby(user_friends_key, calories_burned, user_id)
-            
-            # Also add/update all friends in this leaderboard
-            for friend_id in friends:
-                # Get friend's current calories from weekly leaderboard
-                weekly_key = LeaderboardCache.get_weekly_leaderboard_key()
-                friend_calories = redis.zscore(weekly_key, friend_id) or 0
-                
-                # Update or add friend to this user's friends leaderboard
-                redis.zadd(user_friends_key, {friend_id: friend_calories})
-            
-            # Set expiration
-            redis.expire(user_friends_key, 60 * 60 * 24 * 14)  # 2 weeks
-            
-            # Now update this user in all friends' leaderboards
-            for friend_id in friends:
-                friend_leaderboard_key = LeaderboardCache.get_friends_leaderboard_key(friend_id)
-                
-                # Get user's total calories from weekly leaderboard
-                user_total_calories = redis.zscore(weekly_key, user_id) or 0
-                
-                # Update this user in friend's leaderboard
-                redis.zadd(friend_leaderboard_key, {user_id: user_total_calories})
-                redis.expire(friend_leaderboard_key, 60 * 60 * 24 * 14)  # 2 weeks
+        weekly_key = LeaderboardCache.get_weekly_leaderboard_key()
         
+        try:
+            # Get user's current total from weekly leaderboard
+            user_total = redis.zscore(weekly_key, user_id) or 0
+            
+            # Update user's own friends leaderboard
+            user_friends_key = LeaderboardCache.get_friends_leaderboard_key(user_id)
+            
+            # Add user to their own leaderboard
+            redis.zadd(user_friends_key, {user_id: user_total})
+            
+            # Add each friend to user's leaderboard with their current total
+            for friend in friends:
+                friend_id = str(friend["Id"])
+                friend_total = redis.zscore(weekly_key, friend_id) or 0
+                redis.zadd(user_friends_key, {friend_id: friend_total})
+            
+            # Set expiration for user's friends leaderboard
+            redis.expire(user_friends_key, 60 * 60 * 24 * 14)
+            
+            # Update each friend's leaderboard to include the user
+            for friend in friends:
+                friend_id = str(friend["Id"])
+                friend_leaderboard_key = LeaderboardCache.get_friends_leaderboard_key(friend_id)
+                redis.zadd(friend_leaderboard_key, {user_id: user_total})
+                redis.expire(friend_leaderboard_key, 60 * 60 * 24 * 14)
+            
         except Exception as e:
             logger.error(f"Error updating friends leaderboard: {str(e)}")
+            raise
         finally:
             redis.close()
 
@@ -162,17 +103,13 @@ class LeaderboardCache:
         """Get leaderboard entries with pagination."""
         redis = get_redis()
         try:
-            # Get total users in leaderboard
             total_users = redis.zcard(leaderboard_key)
-            
-            # Get top users with scores
             leaderboard_data = redis.zrevrange(
                 leaderboard_key, 
                 offset, 
                 offset + limit - 1, 
                 withscores=True
             )
-            
             return leaderboard_data, total_users
         except Exception as e:
             logger.error(f"Error getting leaderboard data: {str(e)}")
@@ -185,17 +122,11 @@ class LeaderboardCache:
         """Get a user's rank, score and total users in a specific leaderboard."""
         redis = get_redis()
         try:
-            # Get user's calories
             calories = redis.zscore(leaderboard_key, user_id)
-            
-            # Get user's rank (0-based, so add 1 later)
             rank = redis.zrevrank(leaderboard_key, user_id)
             if rank is not None:
                 rank += 1  # Convert to 1-based ranking
-            
-            # Get total users
             total_users = redis.zcard(leaderboard_key)
-            
             return calories, rank, total_users
         except Exception as e:
             logger.error(f"Error getting user rank: {str(e)}")
@@ -208,19 +139,14 @@ class LeaderboardCache:
         """Clear any data in Redis that's not the current week's leaderboard."""
         redis = get_redis()
         try:
-            # Keep only current week's leaderboard
             current_weekly_key = LeaderboardCache.get_weekly_leaderboard_key()
-            
-            # Get all keys that start with leaderboard:
             all_leaderboard_keys = redis.keys("leaderboard:*")
             
-            # Filter out current weekly key and current friend leaderboards
             keys_to_delete = []
             for key in all_leaderboard_keys:
                 if key != current_weekly_key and not key.startswith("leaderboard:friends:"):
                     keys_to_delete.append(key)
             
-            # Delete old keys if there are any
             if keys_to_delete:
                 redis.delete(*keys_to_delete)
                 logger.info(f"Cleared {len(keys_to_delete)} old leaderboard keys")

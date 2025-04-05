@@ -25,10 +25,18 @@ services:
    container_name: leaderboards-mysql
    ports:
      - "3307:3306"
+   restart: always
    environment:
-     - MYSQL_ROOT_PASSWORD=root
-     - MYSQL_DATABASE=leaderboards
-     - MYSQL_USER=is213
-     - MYSQL_PASSWORD=is213
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_DATABASE=leaderboards
    volumes:
+     - leaderboards_mysql_data:/var/lib/mysql
      - ./leaderboards.sql:/docker-entrypoint-initdb.d/leaderboards.sql
+   healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  leaderboards_mysql_data:

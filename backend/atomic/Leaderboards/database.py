@@ -43,7 +43,6 @@ class Leaderboards(db.Model):
 with app.app_context():
     db.create_all()
 
-# You can add additional database-related methods here if needed
 def add_activity(user_id, calories_burned, activity_type=None, timestamp=None):
     """
     Add a new activity record to the database
