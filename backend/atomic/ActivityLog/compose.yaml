@@ -1,9 +1,6 @@
-version: "3.9"
-
 services:
   activitylog:
-    build:
-      context: .
+    build: .
     container_name: activitylog-service
     ports:
       - "5030:5030"
@@ -11,18 +8,18 @@ services:
     environment:
       DB_USER: root
       DB_PASSWORD: root
-      DB_HOST: host.docker.internal
+      DB_HOST: db
       DB_NAME: activitylog
     depends_on:
       - db
 
   db:
     image: mysql:8.0
-    container_name: mysql-activitylog
+    container_name: activity-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: activitylog
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=activitylog
     ports:
       - "3309:3306"
     volumes:

@@ -1,0 +1,20 @@
+services:
+  activity-coordination:
+    build: .
+    container_name: activity-coordination
+    ports:
+      - "5051:5051"
+    environment:
+      - USER_SERVICE_URL=http://user-service:5000
+      - ACTIVITY_LOG_SERVICE_URL=http://activitylog-service:5030
+      - LEADERBOARDS_SERVICE_URL=http://leaderboards-service:5005
+      - SOCIAL_SERVICE_URL=https://personal-ywco1luc.outsystemscloud.com/SocialsService
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./:/usr/src/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5051/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

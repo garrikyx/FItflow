@@ -5,26 +5,25 @@ import datetime
 import os
 import time
 from sqlalchemy.exc import SQLAlchemyError
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
 
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "root")
-DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_HOST = os.getenv("DB_HOST", "db")
 DB_NAME = os.getenv("DB_NAME", "activitylog")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqlconnector://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:3306/{DB_NAME}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config['SQLALCHEMY_ECHO'] = True  
 
 db = SQLAlchemy(app)
 
-def check_db_connection():
-    try:
-        db.session.execute("SELECT 1")
-        return True
-    except SQLAlchemyError:
-        return False
 
 class ActivityLog(db.Model):
     __tablename__ = "activitylog"
@@ -50,18 +49,23 @@ class ActivityLog(db.Model):
 
 @app.route("/health", methods=["GET"])
 def health_check():
-    db_status = "connected" if check_db_connection() else "disconnected"
-    return jsonify({
-        "status": "healthy",
-        "database": db_status,
-        "timestamp": datetime.datetime.now().isoformat()
-    }), 200
+    try:
+        db.session.query(ActivityLog).first()
+        return jsonify({
+            "status": "healthy",
+            "database": "connected"
+        }), 200
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}", exc_info=True)
+        return jsonify({
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e)
+        }), 500
+
 
 @app.route("/activity", methods=["GET"])
 def get_all_activities():
-    if not check_db_connection():
-        return jsonify({"error": "Database connection error"}), 503
-
     try:
         activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).all()
         if not activities:
@@ -72,9 +76,6 @@ def get_all_activities():
 
 @app.route("/activity", methods=["POST"])
 def log_activity():
-    if not check_db_connection():
-        return jsonify({"error": "Database connection error"}), 503
-
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
@@ -101,9 +102,6 @@ def log_activity():
 
 @app.route("/activity/<userId>", methods=["GET"])
 def get_activities(userId):
-    if not check_db_connection():
-        return jsonify({"error": "Database connection error"}), 503
-
     try:
         activities = ActivityLog.query.filter_by(userId=userId).order_by(ActivityLog.timestamp.desc()).all()
         if not activities:

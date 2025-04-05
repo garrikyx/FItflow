@@ -268,8 +268,6 @@ def login():
 @app.route("/debug/users")
 def debug_users():
     try:
-        # Test database connection
-        db.session.execute('SELECT 1')
         
         # Get all users from SQL table
         users = User.query.all()

@@ -34,12 +34,6 @@ class LeaderboardCache:
         return f"leaderboard:weekly:{year}:{week_number}"
 
     @staticmethod
-    def get_monthly_leaderboard_key():
-        """Generate the Redis key for the current month's leaderboard."""
-        today = datetime.now()
-        return f"leaderboard:monthly:{today.year}:{today.month}"
-
-    @staticmethod
     def get_friends_leaderboard_key(user_id: str):
         """Generate the Redis key for a user's friends leaderboard."""
         today = datetime.now()
@@ -49,27 +43,21 @@ class LeaderboardCache:
 
     @staticmethod
     def update_leaderboards(user_id: str, calories_burned: float, timestamp: Optional[datetime] = None):
-        """Update weekly and monthly leaderboards with new activity data."""
+        """Update weekly leaderboard with new activity data."""
         redis = get_redis()
         try:
             if not timestamp:
                 timestamp = datetime.now()
             
-            # Update weekly leaderboard
+            # Update weekly leaderboard 
             weekly_key = LeaderboardCache.get_weekly_leaderboard_key()
             redis.zincrby(weekly_key, calories_burned, user_id)
             redis.expire(weekly_key, 60 * 60 * 24 * 21)  # 3 weeks
             
-            # Update monthly leaderboard
-            monthly_key = LeaderboardCache.get_monthly_leaderboard_key()
-            redis.zincrby(monthly_key, calories_burned, user_id)
-            redis.expire(monthly_key, 60 * 60 * 24 * 90)  # 90 days
-            
-            # Store activity in activity log
-            activity_id = f"activity:{user_id}:{int(timestamp.timestamp())}"
-            return activity_id
+            logger.info(f"Updated weekly leaderboard for user {user_id} with {calories_burned} calories")
+            return f"activity:{user_id}:{int(timestamp.timestamp())}"
         except Exception as e:
-            logger.error(f"Error updating leaderboards: {str(e)}")
+            logger.error(f"Error updating leaderboard: {str(e)}")
             raise
         finally:
             redis.close()
@@ -212,5 +200,34 @@ class LeaderboardCache:
         except Exception as e:
             logger.error(f"Error getting user rank: {str(e)}")
             raise
+        finally:
+            redis.close()
+
+    @staticmethod
+    def clear_old_data():
+        """Clear any data in Redis that's not the current week's leaderboard."""
+        redis = get_redis()
+        try:
+            # Keep only current week's leaderboard
+            current_weekly_key = LeaderboardCache.get_weekly_leaderboard_key()
+            
+            # Get all keys that start with leaderboard:
+            all_leaderboard_keys = redis.keys("leaderboard:*")
+            
+            # Filter out current weekly key and current friend leaderboards
+            keys_to_delete = []
+            for key in all_leaderboard_keys:
+                if key != current_weekly_key and not key.startswith("leaderboard:friends:"):
+                    keys_to_delete.append(key)
+            
+            # Delete old keys if there are any
+            if keys_to_delete:
+                redis.delete(*keys_to_delete)
+                logger.info(f"Cleared {len(keys_to_delete)} old leaderboard keys")
+            
+            return len(keys_to_delete)
+        except Exception as e:
+            logger.error(f"Error clearing old data: {str(e)}")
+            return 0
         finally:
             redis.close()
