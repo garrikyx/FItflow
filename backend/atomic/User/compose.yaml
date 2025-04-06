@@ -9,6 +9,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - esd-network
     restart: always
   db:
     image: mysql:8.0
@@ -27,7 +29,12 @@ services:
       timeout: 5s
       retries: 5
     restart: always
+    networks:
+        - esd-network
 
 volumes:
   user_mysql_data: 
+networks:
+  esd-network: 
+    external: true
 

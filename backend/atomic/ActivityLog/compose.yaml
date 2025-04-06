@@ -12,6 +12,9 @@ services:
       DB_NAME: activitylog
     depends_on:
       - db
+    networks:
+      - esd-network
+
 
   db:
     image: mysql:8.0
@@ -30,6 +33,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - esd-network
 
 volumes:
   activitylog_mysql_data:
+
+networks:
+  esd-network: 
+    external: true
