@@ -14,9 +14,6 @@ CREATE TABLE IF NOT EXISTS leaderboards (
     INDEX (user_id)
 );
 
--- Grant privileges to the is213 user
-GRANT ALL PRIVILEGES ON leaderboards.* TO 'is213'@'%';
-FLUSH PRIVILEGES;
 
 -- Insert some sample data for testing
 INSERT INTO leaderboards (user_id, calories_burned, activity_type, timestamp) VALUES

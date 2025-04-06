@@ -1,0 +1,201 @@
+networks:
+  fitflow:
+    driver: bridge
+    name: fitflow
+
+volumes:
+  leaderboards_mysql_data:
+    driver: local
+  activitylog_mysql_data:
+    driver: local
+  user_mysql_data:
+    driver: local
+
+services:
+  ###################################
+  # User: Atomic Microservice
+  ###################################
+  user-service:
+    build:
+      context: ./atomic/User
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "5001:5000"
+    environment:
+      - DATABASE_URL=mysql+mysqlconnector://root:root@user-db:3306/user
+    depends_on:
+      user-db:
+        condition: service_healthy
+    networks:
+      - fitflow
+    restart: always
+  user-db:
+    image: mysql:8.0
+    container_name: user-mysql
+    ports:
+      - "3308:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=user
+    volumes:
+      - user_mysql_data:/var/lib/mysql
+      - ./atomic/User/users.sql:/docker-entrypoint-initdb.d/users.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+        - fitflow
+  
+  ##########################################
+  # Activity Log: Atomic Microservice
+  ##########################################  
+  activitylog:
+    build:
+      context: ./atomic/ActivityLog
+      dockerfile: Dockerfile
+    container_name: activitylog
+    ports:
+    - "5030:5030"
+    restart: unless-stopped
+    environment:
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_HOST: activitylog-db
+      DB_NAME: activitylog
+    depends_on:
+      - activitylog-db
+    networks:
+      - fitflow
+  activitylog-db:
+    image: mysql:8.0
+    container_name: activity-mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=activitylog
+    ports:
+      - "3309:3306"
+    volumes:
+      - activitylog_mysql_data:/var/lib/mysql
+      - ./atomic/ActivityLog/activitylog.sql:/docker-entrypoint-initdb.d/activitylog.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fitflow
+
+  ##########################################
+  # Leaderboards: Atomic Microservice
+  ##########################################  
+  leaderboards:
+   build:
+     context: ./atomic/Leaderboards
+     dockerfile: Dockerfile
+   container_name: leaderboards
+   ports:
+     - "5005:5005"
+   environment:
+     - dbURL=mysql+mysqlconnector://root:root@leaderboards-mysql:3306/leaderboards
+     - REDIS_HOST=leaderboards-redis
+     - REDIS_PORT=6379
+   depends_on:
+     leaderboards-redis:
+       condition: service_healthy
+     leaderboards-mysql:
+       condition: service_healthy
+   networks:
+     - fitflow
+  leaderboards-redis:
+   image: redis:alpine
+   container_name: leaderboards-redis
+   ports:
+     - "6379:6379"
+   networks:
+     - fitflow
+   healthcheck:
+     test: ["CMD", "redis-cli", "ping"]
+     interval: 5s
+     timeout: 5s
+     retries: 3
+  leaderboards-mysql:
+   image: mysql:8.0
+   container_name: leaderboards-mysql
+   ports:
+     - "3307:3306"
+   restart: always
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_DATABASE=leaderboards
+   volumes:
+    - leaderboards_mysql_data:/var/lib/mysql
+    - ./atomic/Leaderboards/leaderboards.sql:/docker-entrypoint-initdb.d/leaderboards.sql
+   healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+   networks:
+    - fitflow
+
+  #################################################
+  # Fitness Recommendation: Composite Microservice
+  #################################################
+  fitnessrecommendation:
+    build:
+      context: ./composite/FitnessRecommendation
+      dockerfile: Dockerfile
+    container_name: fitnessrecommendation-service
+    ports:
+      - "5050:5050"
+    restart: unless-stopped
+    environment:
+      - USER_SERVICE_URL=http://user-service:5000/user
+      - ACTIVITY_LOG_URL=http://activitylog:5030/activity
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./:/usr/src/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - fitflow
+
+  #################################################
+  # Activity Coordination: Composite Microservice
+  #################################################
+  activity-coordination:
+    build: 
+      context: ./composite/activityCoordination
+      dockerfile: Dockerfile
+    container_name: activitycoordination-service
+    ports:
+      - "5051:5051"
+    restart: unless-stopped
+    environment:
+      - USER_SERVICE_URL=http://user-service:5000
+      - ACTIVITY_LOG_SERVICE_URL=http://activitylog:5030
+      - LEADERBOARDS_SERVICE_URL=http://leaderboards:5005
+      - SOCIAL_SERVICE_URL=https://personal-ywco1luc.outsystemscloud.com/SocialsService
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./:/usr/src/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5051/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - fitflow
+

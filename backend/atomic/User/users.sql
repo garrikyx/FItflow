@@ -28,7 +28,7 @@ use user;
 --
 -- Table structure for table `users`
 --
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
   `user_id` varchar(50) NOT NULL,
   `email` varchar(120) NOT NULL,
   `name` varchar(120) NOT NULL,
@@ -42,7 +42,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `email`, `name`, `password`, `weight`, `goal`) VALUES
-('4', 'lynn.ong.2023@smu.edu.sg', 'test', '1234', 100, 'lose');
+('4', 'lynn.ong.2023@smu.edu.sg', 'Lynn', '1234', 100, 'lose'),
+('5', 'garrisonkoh.2023@scis.smu.edu.sg','Garrison','1234',70.5, 'gain');
+
 
 --
 -- Indexes for dumped tables

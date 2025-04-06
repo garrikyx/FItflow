@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:5001")
-ACTIVITY_LOG_SERVICE_URL = os.getenv("ACTIVITY_LOG_SERVICE_URL", "http://activitylog-service:5030")
-LEADERBOARDS_SERVICE_URL = os.getenv("LEADERBOARDS_SERVICE_URL", "http://leaderboards-service:5005")
+USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:5001/user")
+ACTIVITY_LOG_SERVICE_URL = os.getenv("ACTIVITY_LOG_SERVICE_URL", "http://activitylog-service:5030/activity")
+LEADERBOARDS_SERVICE_URL = os.getenv("LEADERBOARDS_SERVICE_URL", "http://leaderboards-service:5005/leaderboard")
 SOCIAL_SERVICE_URL = os.getenv("SOCIAL_SERVICE_URL", "https://personal-ywco1luc.outsystemscloud.com/SocialsService")
 
 @app.route("/health", methods=["GET"])
@@ -42,7 +42,7 @@ def coordinate_activity():
                 }), 400
         
         user_id = data.get("userId")
-        duration = data.get("duration")
+        duration = int(data.get("duration"))
         activity_type = data.get("activityType")
         
         # Get user profile
@@ -58,6 +58,7 @@ def coordinate_activity():
         # Calculate calories burned
         weight = user_data.get("weight", 70)
         calories_burned = calculate_calories_burned(weight, activity_type, duration)
+        intensity = calculate_intensity(duration, activity_type)
         
         # Log activity
         activity_response = requests.post(
@@ -66,6 +67,7 @@ def coordinate_activity():
                 "userId": user_id,
                 "exerciseType": activity_type,
                 "duration": duration,
+                "intensity": intensity,
                 "caloriesBurned": calories_burned
             }
         )
@@ -73,7 +75,12 @@ def coordinate_activity():
         if activity_response.status_code not in [200, 201]:
             return jsonify({
                 "code": activity_response.status_code,
-                "message": f"Failed to log activity: {activity_response.text}"
+                "message": f"Failed to log activity: {activity_response.text}",
+                "userId": user_id,
+                "exerciseType": activity_type,
+                "duration": duration,
+                "intensity": intensity,
+                "caloriesBurned": calories_burned
             }), activity_response.status_code
         
         # Get friends list from social service

@@ -5,9 +5,9 @@ services:
     ports:
       - "5051:5051"
     environment:
-      - USER_SERVICE_URL=http://user-service:5001
-      - ACTIVITY_LOG_SERVICE_URL=http://activitylog-service:5030
-      - LEADERBOARDS_SERVICE_URL=http://leaderboards-service:5005
+      - USER_SERVICE_URL=http://host.docker.internal:5001
+      - ACTIVITY_LOG_SERVICE_URL=http://host.docker.internal:5030
+      - LEADERBOARDS_SERVICE_URL=http://host.docker.internal:5005
       - SOCIAL_SERVICE_URL=https://personal-ywco1luc.outsystemscloud.com/SocialsService
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -12,7 +12,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:5001/user")
+USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:5000/user")
 ACTIVITY_LOG_URL = os.getenv("ACTIVITY_LOG_URL", "http://activitylog-service:5030/activity")
 
 
@@ -26,7 +26,9 @@ def fetch_user_data(user_id):
     try:
         user_resp = requests.get(f"{USER_SERVICE_URL}/{user_id}")
         user_resp.raise_for_status()
-        return user_resp.json()
+        data = user_resp.json()
+
+        return data
     except requests.exceptions.RequestException as e:
         # Fallback to hardcoded user if service is not available
         app.logger.warning(f"Failed to fetch user data: {str(e)}. Using fallback data.")
@@ -101,6 +103,7 @@ def recommend():
     try:
         # 1. Fetch user data from user microservice
         user_data = fetch_user_data(user_id)
+
 
         # 2. Fetch weather data based on location
         weather = get_weather_data(location)

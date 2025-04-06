@@ -74,3 +74,5 @@ node_modules/
 **/firebase-adminsdk*.json
 *.json.key
 credentials(donotpush).json
+*.pyc
+backend/atomic/.DS_Store
