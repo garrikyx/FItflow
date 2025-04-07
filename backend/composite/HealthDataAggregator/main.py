@@ -7,10 +7,15 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from pytz import timezone
 import datetime
+from flask import Flask
+from flask_cors import CORS
 
 load_dotenv()
 
-USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://localhost:5001/user")
+app = Flask(__name__)
+CORS(app)
+
+USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://localhost:5000/user")
 ACTIVITYLOG_SERVICE_URL = os.getenv("ACTIVITY_SERVICE_URL", "http://localhost:5030/activity")
 
 def monthly_report():
@@ -114,23 +119,51 @@ def monthly_report():
             html_content=html_content
         )
 
-        sg = SendGridAPIClient(os.environ['SENDGRID_API_KEY'])
+        sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
         response = sg.send(message)
         print(f"✅ Email sent to {email} with status: {response.status_code}")
 
     except Exception as e:
         print(f"❌ Error in monthly report: {e}")
 
+@app.route('/test-report')
+def test_report():
+    monthly_report()
+    return "Monthly report triggered!", 200
+    
+@app.route("/test-email")
+def test_email():
+    try:
+        message = Mail(
+            from_email='ecosmart.diet@gmail.com',
+            to_emails='garrisonkoh.2023@scis.smu.edu.sg',
+            subject='Test Email',
+            plain_text_content='This is a test email',
+            html_content='<strong>This is a test email</strong>'
+        )
+        sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+        response = sg.send(message)
+        print(f"✅ Test email sent with status: {response.status_code}")
+        return "Test email sent", 200
+    except Exception as e:
+        print(f"❌ Error sending test email: {e}")
+        return f"Error: {e}", 500
+
+@app.route('/health')
+def health():
+    return {"status": "healthy", "service": "HealthDataAggregator"}, 200
+
 if __name__ == '__main__':
     scheduler = BackgroundScheduler(timezone=timezone("Asia/Singapore"))
     # trigger = CronTrigger(day=1, hour=0, minute=0)  # Real monthly trigger
-    trigger = CronTrigger(second='*/120')  # For testing every 2 minutes
+    trigger = CronTrigger(minute='*/5')  # For testing every 5 minutes
     scheduler.add_job(monthly_report, trigger)
     print("Scheduler started...")
     scheduler.start()
-
-    try:
-        while True:
-            pass
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
+    # try:
+    #     while True:
+    #         datetime.time.sleep(1)  
+    # except (KeyboardInterrupt, SystemExit):
+    #     scheduler.shutdown()
+    
+    app.run(host='0.0.0.0', port=5052, debug=True)

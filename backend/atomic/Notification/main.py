@@ -26,6 +26,14 @@ def publish_message(message, queue):
     )
     print(f"[x] Sent to {queue}: {message}")
 
+# Endpoint: Health Check
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({
+        "status": "healthy",
+        "service": "NotificationService"
+    }), 200
+
 # Endpoint: Notify Friends on Calorie Update
 @app.route('/notify_calories', methods=['POST'])
 def notify_calories():
@@ -61,4 +69,4 @@ def enqueue_report():
     return jsonify({"status": "Monthly report enqueued"}), 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5050)
+    app.run(host="0.0.0.0", port=5010)

@@ -143,6 +143,40 @@ services:
    networks:
     - fitflow
 
+  ##########################################
+  # Notifications: Atomic Microservice
+  ##########################################
+  notification-service:
+   build:
+     context: ./atomic/Notification
+     dockerfile: Dockerfile
+   container_name: notification-service
+   ports:
+    - "5010:5010"
+   depends_on:
+    - rabbitmq
+   restart: unless-stopped
+   networks:
+    - fitflow
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+    - "5672:5672"    
+    - "15672:15672" 
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+    - fitflow
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 10
+
+
   #################################################
   # Fitness Recommendation: Composite Microservice
   #################################################
@@ -199,3 +233,30 @@ services:
     networks:
       - fitflow
 
+  #################################################
+  # Health Data Aggregator: Composite Microservice
+  #################################################
+  health-data-aggregator:
+    build: 
+      context: ./composite/HealthDataAggregator
+      dockerfile: Dockerfile
+    container_name: health-data-aggregator-service
+    ports:
+      - "5052:5052"
+    restart: unless-stopped
+    environment:
+      - USER_SERVICE_URL=http://user-service:5000/user
+      - ACTIVITY_LOG_SERVICE_URL=http://activitylog:5030/activity
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - ./composite/HealthDataAggregator/.env
+    volumes:
+      - ./:/usr/src/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5052/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - fitflow
