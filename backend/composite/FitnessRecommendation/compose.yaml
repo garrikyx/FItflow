@@ -7,7 +7,7 @@ services:
       - "5050:5050"
     restart: unless-stopped
     environment:
-      - USER_SERVICE_URL=http://user-service:5001/user
+      - USER_SERVICE_URL=http://user-service:5000/user
       - ACTIVITY_LOG_URL=http://activitylog:5030/activity
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1

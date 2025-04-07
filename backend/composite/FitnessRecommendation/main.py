@@ -26,16 +26,18 @@ def fetch_user_data(user_id):
     try:
         user_resp = requests.get(f"{USER_SERVICE_URL}/{user_id}")
         user_resp.raise_for_status()
-        data = user_resp.json()
+        result = user_resp.json()
+        user_info = result.get("data", {})  # ✅ get only the "data" dict
 
-        return data
+        return user_info  # ✅ this contains userId, name, goal, etc.
     except requests.exceptions.RequestException as e:
         # Fallback to hardcoded user if service is not available
         app.logger.warning(f"Failed to fetch user data: {str(e)}. Using fallback data.")
         return {
-            "id": user_id,
+            "userId": user_id,
             "name": "Jane Doe",
-            "preferences": ["Lose Weight"]
+            "goal": "lose",
+            "weight": 70.0
         }
 
 

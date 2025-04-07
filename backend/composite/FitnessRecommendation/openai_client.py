@@ -14,7 +14,7 @@ def get_recommendation(user_data, activity_log, weather,summary_stats):
     The user is trying to stay fit. Based on their profile, recent activity, and current weather, provide a personalized recommendation (maximum 5 sentences).
 
     👤 User Info:
-    - ID: {user_data['id']}
+    - ID: {user_data['userId']}
     - Name: {user_data.get('name')}
     - Recent activity history: {activity_log}
     - Preferences: {', '.join(user_data.get('preferences', []))}
