@@ -20,12 +20,14 @@ SET time_zone = "+00:00";
 --
 -- Database: `activitylog`
 --
-
+CREATE DATABASE IF NOT EXISTS `activitylog`;
+USE `activitylog`;
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `activitylog`
 --
+DROP TABLE IF EXISTS `activitylog`;
 
 CREATE TABLE `activitylog` (
   `id` int(11) NOT NULL,

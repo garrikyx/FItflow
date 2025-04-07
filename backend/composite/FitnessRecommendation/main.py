@@ -47,7 +47,7 @@ def fetch_activity_logs(user_id):
         activity_resp.raise_for_status()
         return activity_resp.json()
     except requests.exceptions.RequestException as e:
-        app.logger.error(f"Failed to fetch activity log: {str(e)}")
+        print(f"Failed to fetch activity log: {str(e)}")
         raise Exception(f"Failed to fetch activity log: {str(e)}")
 
 
@@ -65,7 +65,7 @@ def filter_recent_activities(activity_log, time_str=None):
         ]
     else:
         # Use default 7-day window
-        one_week_ago = datetime.utcnow() - timedelta(days=7)
+        one_week_ago = datetime.now() - timedelta(days=7)
         return [
             a for a in activity_log
             if datetime.fromisoformat(a['timestamp']) > one_week_ago

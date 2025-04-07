@@ -1,11 +1,13 @@
 -- Create database if it doesn't exist
-CREATE DATABASE IF NOT EXISTS leaderboards;
+CREATE DATABASE IF NOT EXISTS `leaderboards`;
 
 -- Use the leaderboards database
-USE leaderboards;
+USE `leaderboards`;
 
 -- Create the leaderboards table
-CREATE TABLE IF NOT EXISTS leaderboards (
+
+DROP TABLE IF EXISTS `leaderboards`;
+CREATE TABLE IF NOT EXISTS `leaderboards` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
     calories_burned FLOAT NOT NULL,

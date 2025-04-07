@@ -111,6 +111,7 @@ services:
        condition: service_healthy
    networks:
      - fitflow
+   restart: always
   leaderboards-redis:
    image: redis:alpine
    container_name: leaderboards-redis
@@ -154,7 +155,8 @@ services:
    ports:
     - "5010:5010"
    depends_on:
-    - rabbitmq
+     rabbitmq:
+       condition: service_healthy
    restart: unless-stopped
    networks:
     - fitflow
@@ -220,6 +222,7 @@ services:
       - USER_SERVICE_URL=http://user-service:5000
       - ACTIVITY_LOG_SERVICE_URL=http://activitylog:5030
       - LEADERBOARDS_SERVICE_URL=http://leaderboards:5005
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5010
       - SOCIAL_SERVICE_URL=https://personal-ywco1luc.outsystemscloud.com/SocialsService
     extra_hosts:
       - "host.docker.internal:host-gateway"

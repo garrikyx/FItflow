@@ -28,6 +28,8 @@ use user;
 --
 -- Table structure for table `users`
 --
+
+DROP TABLE IF EXISTS `users`;
 CREATE TABLE IF NOT EXISTS `users` (
   `user_id` varchar(50) NOT NULL,
   `email` varchar(120) NOT NULL,
