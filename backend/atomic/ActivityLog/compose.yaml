@@ -13,7 +13,7 @@ services:
     depends_on:
       - db
     networks:
-      - esd-network
+      - fitflow
 
 
   db:
@@ -34,11 +34,11 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - esd-network
+      - fitflow
 
 volumes:
   activitylog_mysql_data:
 
 networks:
-  esd-network: 
+  fitflow: 
     external: true

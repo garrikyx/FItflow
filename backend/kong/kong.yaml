@@ -94,7 +94,7 @@ services:
     routes:
       - name: fitnessrecommendation-route
         paths: ["/fitnessrecommendation"]
-        strip_path: false
+        strip_path: true
         methods: ["GET", "POST", "OPTIONS"]
 
   - name: activitycoordination-service

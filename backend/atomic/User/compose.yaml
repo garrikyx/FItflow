@@ -10,7 +10,7 @@ services:
       db:
         condition: service_healthy
     networks:
-      - esd-network
+      - fitflow
     restart: always
   db:
     image: mysql:8.0
@@ -30,11 +30,11 @@ services:
       retries: 5
     restart: always
     networks:
-        - esd-network
+        - fitflow
 
 volumes:
   user_mysql_data: 
 networks:
-  esd-network: 
+  fitflow: 
     external: true
 

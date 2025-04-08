@@ -25,8 +25,8 @@ def compute_average_intensity(activities):
 def fetch_user_data(user_id):
     try:
         user_resp = requests.get(f"{USER_SERVICE_URL}/{user_id}")
-        user_resp.raise_for_status()
-        result = user_resp.json()
+        user_resp.raise_for_status()ß
+        result = user_resp.json()ß
         user_info = result.get("data", {})  # ✅ get only the "data" dict
 
         return user_info  # ✅ this contains userId, name, goal, etc.
