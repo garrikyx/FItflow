@@ -20,6 +20,8 @@
                                     v-model="userId"
                                     placeholder="Enter your User ID"
                                     required
+                                    pattern="^(?!login$).*"
+                                    title="Please enter a valid User ID (cannot be 'login')"
                                 />
                             </div>
                             
@@ -200,12 +202,23 @@ export default {
         },
         async handleLogin() {
             try {
+                // Add validation
+                if (!this.userId || this.userId.trim() === '') {
+                    this.error = 'Please enter your User ID';
+                    return;
+                }
+
+                if (this.userId.toLowerCase() === 'login') {
+                    this.error = 'Please enter a valid User ID';
+                    return;
+                }
+
                 console.log('Attempting login with:', {
                     userId: this.userId,
                     password: this.password
                 });
 
-                const response = await axios.post('http://localhost:5001/login', {
+                const response = await axios.post('http://localhost:8000/user/login', {
                     userId: this.userId,
                     password: this.password
                 }, {
@@ -218,7 +231,12 @@ export default {
                 console.log('Login response:', response.data);
 
                 if (response.data.code === 200) {
-                    localStorage.setItem('user', JSON.stringify(response.data.data));
+                    // Store user data in localStorage
+                    const userData = {
+                        userId: this.userId,
+                        ...response.data.data
+                    };
+                    localStorage.setItem('user', JSON.stringify(userData));
                     this.$router.push('/homepage');
                 } else {
                     this.error = response.data.message;
@@ -244,7 +262,7 @@ export default {
             }
 
             try {
-                const response = await axios.post(`http://localhost:5001/user/${this.registerData.userId}`, {
+                const response = await axios.post(`http://localhost:8000/user/${this.registerData.userId}`, {
                     email: this.registerData.email,
                     name: this.registerData.name,
                     weight: parseFloat(this.registerData.weight),

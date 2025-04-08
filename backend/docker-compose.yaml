@@ -42,24 +42,25 @@ services:
       - user_mysql_data:/var/lib/mysql
       - ./atomic/User/users.sql:/docker-entrypoint-initdb.d/users.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: always
     networks:
-        - fitflow
-  
+      - fitflow
+
   ##########################################
   # Activity Log: Atomic Microservice
-  ##########################################  
+  ##########################################
   activitylog:
     build:
       context: ./atomic/ActivityLog
       dockerfile: Dockerfile
     container_name: activitylog
     ports:
-    - "5030:5030"
+      - "5030:5030"
     restart: unless-stopped
     environment:
       DB_USER: root
@@ -83,7 +84,8 @@ services:
       - activitylog_mysql_data:/var/lib/mysql
       - ./atomic/ActivityLog/activitylog.sql:/docker-entrypoint-initdb.d/activitylog.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -92,92 +94,92 @@ services:
 
   ##########################################
   # Leaderboards: Atomic Microservice
-  ##########################################  
+  ##########################################
   leaderboards:
-   build:
-     context: ./atomic/Leaderboards
-     dockerfile: Dockerfile
-   container_name: leaderboards
-   ports:
-     - "5005:5005"
-   environment:
-     - dbURL=mysql+mysqlconnector://root:root@leaderboards-mysql:3306/leaderboards
-     - REDIS_HOST=leaderboards-redis
-     - REDIS_PORT=6379
-   depends_on:
-     leaderboards-redis:
-       condition: service_healthy
-     leaderboards-mysql:
-       condition: service_healthy
-   networks:
-     - fitflow
-   restart: always
+    build:
+      context: ./atomic/Leaderboards
+      dockerfile: Dockerfile
+    container_name: leaderboards
+    ports:
+      - "5005:5005"
+    environment:
+      - dbURL=mysql+mysqlconnector://root:root@leaderboards-mysql:3306/leaderboards
+      - REDIS_HOST=leaderboards-redis
+      - REDIS_PORT=6379
+    depends_on:
+      leaderboards-redis:
+        condition: service_healthy
+      leaderboards-mysql:
+        condition: service_healthy
+    networks:
+      - fitflow
+    restart: always
   leaderboards-redis:
-   image: redis:alpine
-   container_name: leaderboards-redis
-   ports:
-     - "6379:6379"
-   networks:
-     - fitflow
-   healthcheck:
-     test: ["CMD", "redis-cli", "ping"]
-     interval: 5s
-     timeout: 5s
-     retries: 3
+    image: redis:alpine
+    container_name: leaderboards-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - fitflow
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
   leaderboards-mysql:
-   image: mysql:8.0
-   container_name: leaderboards-mysql
-   ports:
-     - "3307:3306"
-   restart: always
-   environment:
-    - MYSQL_ROOT_PASSWORD=root
-    - MYSQL_DATABASE=leaderboards
-   volumes:
-    - leaderboards_mysql_data:/var/lib/mysql
-    - ./atomic/Leaderboards/leaderboards.sql:/docker-entrypoint-initdb.d/leaderboards.sql
-   healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+    image: mysql:8.0
+    container_name: leaderboards-mysql
+    ports:
+      - "3307:3306"
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=leaderboards
+    volumes:
+      - leaderboards_mysql_data:/var/lib/mysql
+      - ./atomic/Leaderboards/leaderboards.sql:/docker-entrypoint-initdb.d/leaderboards.sql
+    healthcheck:
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 5
-   networks:
-    - fitflow
+    networks:
+      - fitflow
 
   ##########################################
   # Notifications: Atomic Microservice
   ##########################################
   notification-service:
-   build:
-     context: ./atomic/Notification
-     dockerfile: Dockerfile
-   container_name: notification-service
-   ports:
-    - "5010:5010"
-   depends_on:
-     rabbitmq:
-       condition: service_healthy
-   restart: unless-stopped
-   networks:
-    - fitflow
+    build:
+      context: ./atomic/Notification
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "5010:5010"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - fitflow
 
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-    - "5672:5672"    
-    - "15672:15672" 
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     networks:
-    - fitflow
+      - fitflow
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 30s
       timeout: 30s
       retries: 10
-
 
   #################################################
   # Fitness Recommendation: Composite Microservice
@@ -211,7 +213,7 @@ services:
   # Activity Coordination: Composite Microservice
   #################################################
   activity-coordination:
-    build: 
+    build:
       context: ./composite/activityCoordination
       dockerfile: Dockerfile
     container_name: activitycoordination-service
@@ -240,7 +242,7 @@ services:
   # Health Data Aggregator: Composite Microservice
   #################################################
   health-data-aggregator:
-    build: 
+    build:
       context: ./composite/HealthDataAggregator
       dockerfile: Dockerfile
     container_name: health-data-aggregator-service
@@ -263,3 +265,38 @@ services:
       retries: 3
     networks:
       - fitflow
+
+  kong:
+    image: kong/kong-gateway:3.9
+    # platform: linux/amd64  # DELETE THIS LINE IF NOT USING M1 CHIP
+    restart: always
+    networks:
+      - fitflow
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yaml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+    depends_on:
+      - user-service
+      - activitylog
+      - leaderboards
+      - notification-service
+      - fitnessrecommendation
+      - activity-coordination
+      - health-data-aggregator
+    volumes:
+      - ./kong.yaml:/usr/local/kong/declarative/kong.yaml
+    ports: # https://docs.konghq.com/gateway/latest/production/networking/default-ports/
+      - "8000:8000" # Takes incoming HTTP traffic from Consumers, and forwards it to upstream Services.
+      - "8001:8001" # Admin API. Listens for calls from the command line over HTTP.
+      - "8002:8002" # Kong Manager (GUI). Listens for HTTP traffic.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001"]
+      interval: 30s
+      timeout: 10s
+      retries: 5

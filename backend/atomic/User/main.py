@@ -205,7 +205,7 @@ def delete_user(userId):
         }), 500
 
 # LOGIN
-@app.route("/login", methods=["POST"])
+@app.route("/user/login", methods=["POST"])
 def login():
     app.logger.debug("Login endpoint called")
     try:
@@ -222,9 +222,24 @@ def login():
         userId = data.get('userId')
         password = data.get('password')
         
+        # Input validation
+        if not userId or not password:
+            app.logger.error("Missing userId or password")
+            return jsonify({
+                "code": 400,
+                "message": "Missing userId or password"
+            }), 400
+
+        if userId.lower() == 'login':
+            app.logger.error("Invalid userId: 'login'")
+            return jsonify({
+                "code": 400,
+                "message": "Invalid user ID"
+            }), 400
+        
         app.logger.debug(f"Login attempt for user: {userId}")
 
-        # Add more detailed logging
+        # Query database for user
         app.logger.debug("Querying SQL database for user...")
         user = User.query.get(userId)
         app.logger.debug(f"SQL query result: {user is not None}")
@@ -236,32 +251,49 @@ def login():
                 "message": "User not found"
             }), 404
 
-        # Log the actual SQL user data
-        app.logger.debug(f"Found user in SQL: {user.user_id}, {user.email}")
+        # Try hashed password first, then fallback to plain text
+        try:
+            if check_password_hash(user.password, password):
+                app.logger.info(f"Successful login with hashed password for user: {userId}")
+                return jsonify({
+                    "code": 200,
+                    "data": {
+                        "userId": user.user_id,
+                        "email": user.email,
+                        "name": user.name,
+                        "weight": user.weight,
+                        "goal": user.goal
+                    }
+                })
+        except Exception as e:
+            app.logger.debug(f"Hashed password check failed, trying plain text: {str(e)}")
+            pass
 
-        if check_password_hash(user.password, password):
-            app.logger.info(f"Successful login for user: {userId}")
+        # Try plain text password
+        if user.password == password:
+            app.logger.info(f"Successful login with plain text password for user: {userId}")
             return jsonify({
                 "code": 200,
-                "message": "Login successful",
                 "data": {
-                    "userId": userId,
+                    "userId": user.user_id,
+                    "email": user.email,
+                    "name": user.name,
                     "weight": user.weight,
                     "goal": user.goal
                 }
             })
-        else:
-            app.logger.warning(f"Invalid password for user: {userId}")
-            return jsonify({
-                "code": 401,
-                "message": "Invalid password"
-            }), 401
+
+        app.logger.warning(f"Invalid password for user: {userId}")
+        return jsonify({
+            "code": 401,
+            "message": "Invalid password"
+        }), 401
 
     except Exception as e:
-        app.logger.error(f"Login error: {str(e)}", exc_info=True)
+        app.logger.error(f"Error during login: {str(e)}")
         return jsonify({
             "code": 500,
-            "message": f"Server error: {str(e)}"
+            "message": f"An error occurred: {str(e)}"
         }), 500
 
 # Add this new route to check database connection and contents

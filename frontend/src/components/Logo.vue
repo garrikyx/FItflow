@@ -2,7 +2,10 @@
 <template>
     <div class="logo">
       <router-link to="/" class="logo-link">
-        <h1>FitFlow</h1>
+        <div class="logo-container">
+          <span class="logo-emoji">🏋️</span>
+          <h1>FitFlow</h1>
+        </div>
       </router-link>
     </div>
   </template>
@@ -21,5 +24,13 @@
   }
   .logo-link {
     text-decoration: none; /* Remove underline from link */
+  }
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-emoji {
+    font-size: 24px;
   }
   </style>
