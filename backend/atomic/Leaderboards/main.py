@@ -52,9 +52,9 @@ def record_activity():
     except Exception as e:
         logger.error(f"Error recording activity: {str(e)}")
         return jsonify({
-            "code": 400,
+            "code": 500,
             "message": f"Error recording activity: {str(e)}"
-        }), 400
+        }), 500
 
 @app.route("/leaderboard/weekly")
 def get_weekly_leaderboard():
