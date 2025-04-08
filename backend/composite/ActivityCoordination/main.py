@@ -104,7 +104,7 @@ def coordinate_activity():
 
         # Determine which friends were passed
         for friend in friends:
-            friend_id = str(friend.get("id"))
+            friend_id = str(friend.get("FriendId") or friend.get("id"))
             friend_calories = friend.get("calories", 0)
             if friend_id and calories_burned > friend_calories:
                 passed_friends.append(friend_id)
