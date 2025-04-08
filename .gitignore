@@ -75,4 +75,6 @@ node_modules/
 *.json.key
 credentials(donotpush).json
 *.pyc
-backend/atomic/.DS_Store
+
+# MacOS
+.DS_Store
