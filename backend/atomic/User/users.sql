@@ -47,7 +47,7 @@ INSERT INTO `users` (`user_id`, `email`, `name`, `password`, `weight`, `goal`) V
 ('4', 'lynn.ong.2023@smu.edu.sg', 'Lynn', '1234', 100, 'lose'),
 ('5', 'garrisonkoh.2023@scis.smu.edu.sg','Garrison','1234',70.5, 'gain'),
 ('6', 'zephanchin@gmail.com','Zephan','123123',80, 'gain'),
-('10', '"jn.tjong.2023@scis.smu.edu.sg"','Tjong Jia Ning','1234',65, 'lose');
+('10', 'jn.tjong.2023@scis.smu.edu.sg','Tjong Jia Ning','1234',65, 'lose');
 
 
 --
