@@ -47,7 +47,7 @@ def health():
     }), 200
 
 # Notify Friends on Calorie Update
-@app.route('/notify_calories', methods=['POST'])
+@app.route('/notification/notify_calories', methods=['POST'])
 def notify_calories():
     data = request.json
     if not all(key in data for key in ("friends_user_ids", "message", "timestamp", "userId", "name")):
@@ -65,7 +65,7 @@ def notify_calories():
     return jsonify({"status": "Notification sent to friends"}), 200
 
 # SSE Endpoint for Real-Time Notifications
-@app.route('/events')
+@app.route('/notification/events')
 def sse_stream():
     q = queue.Queue()
     

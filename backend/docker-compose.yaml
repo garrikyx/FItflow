@@ -290,7 +290,7 @@ services:
       - activity-coordination
       - health-data-aggregator
     volumes:
-      - ./kong.yaml:/usr/local/kong/declarative/kong.yaml
+      - ./kong/kong.yaml:/usr/local/kong/declarative/kong.yaml
     ports: # https://docs.konghq.com/gateway/latest/production/networking/default-ports/
       - "8000:8000" # Takes incoming HTTP traffic from Consumers, and forwards it to upstream Services.
       - "8001:8001" # Admin API. Listens for calls from the command line over HTTP.

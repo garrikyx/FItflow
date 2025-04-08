@@ -1,0 +1,129 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+# USER SERVICE
+  - name: user-service
+    url: http://user-service:5000
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - http://localhost:5173
+            - http://localhost:8080
+          methods: ["GET", "POST", "OPTIONS"]
+          headers: ["Content-Type", "Authorization"]
+          credentials: true
+    routes:
+      - name: user-route
+        paths: ["/user"]
+        strip_path: false
+        methods: ["GET", "POST", "OPTIONS"]
+
+# ACTIVITYLOG SERVICE
+  - name: activitylog-service
+    url: http://activitylog:5030
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - http://localhost:5173
+            - http://localhost:8080
+          methods: ["GET", "POST", "OPTIONS"]
+          headers: ["Content-Type", "Authorization"]
+          credentials: true
+    routes:
+      - name: activitylog-route
+        paths: ["/activity"]
+        strip_path: false
+        methods: ["GET", "POST", "OPTIONS"]
+
+# LEADERBOARDS SERVICE
+  - name: leaderboards-service
+    url: http://leaderboards:5005
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - http://localhost:5173
+            - http://localhost:8080
+          methods: ["GET", "POST", "OPTIONS"]
+          headers: ["Content-Type", "Authorization"]
+          credentials: true
+    routes:
+      - name: leaderboards-route
+        paths: ["/leaderboard"]
+        strip_path: false
+        methods: ["GET", "POST", "OPTIONS"]
+
+  - name: notification-service
+    url: http://notification-service:5010
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - http://localhost:5173
+            - http://localhost:8080
+          methods: ["GET", "POST", "OPTIONS"]
+          headers: ["Content-Type", "Authorization"]
+          credentials: true
+    routes:
+      - name: notification-route
+        paths: ["/notification"]
+        strip_path: false
+        methods: ["GET", "POST", "OPTIONS"]
+
+  ####################
+  # Composite Services
+  ####################
+
+  - name: fitnessrecommendation-service
+    url: http://fitnessrecommendation:5050
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - http://localhost:5173
+            - http://localhost:8080
+          methods: ["GET", "POST", "OPTIONS"]
+          headers: ["Content-Type", "Authorization"]
+          credentials: true
+    routes:
+      - name: fitnessrecommendation-route
+        paths: ["/fitnessrecommendation"]
+        strip_path: true
+        methods: ["GET", "POST", "OPTIONS"]
+
+  - name: activitycoordination-service
+    url: http://activity-coordination:5051
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - http://localhost:5173
+            - http://localhost:8080
+          methods: ["GET", "POST", "OPTIONS"]
+          headers: ["Content-Type", "Authorization"]
+          credentials: true
+    routes:
+      - name: activitycoordination-route
+        paths: ["/activitycoordination"]
+        strip_path: true
+        methods: ["GET", "POST", "OPTIONS"]
+
+  - name: healthdataaggregator-service
+    url: http://health-data-aggregator:5052
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - http://localhost:5173
+            - http://localhost:8080
+          methods: ["GET", "POST", "OPTIONS"]
+          headers: ["Content-Type", "Authorization"]
+          credentials: true
+    routes:
+      - name: healthdataaggregator-route
+        paths: ["/healthdataaggregator"]
+        strip_path: true
+        methods: ["GET", "POST", "OPTIONS"]
