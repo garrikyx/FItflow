@@ -1,5 +1,4 @@
-version: '3.8'
-
+#NOT IN USE (FOR TESTING PURPOSES)
 services:
   monthly-scheduler:
     build:
