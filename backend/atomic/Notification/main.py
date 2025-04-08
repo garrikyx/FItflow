@@ -6,10 +6,13 @@ import queue
 import logging
 import signal
 import sys
+from datetime import datetime
+import time
+import os
 
 app = Flask(__name__)
 
-RABBITMQ_HOST = "rabbitmq"
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
 
 # In-memory store of connected clients and lock for thread safety
 clients = []
@@ -21,22 +24,44 @@ logger = logging.getLogger(__name__)
 
 # RabbitMQ Connection Setup
 def get_rabbitmq_channel():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
-    channel = connection.channel()
-    channel.queue_declare(queue='notifications', durable=True)
-    channel.queue_declare(queue='reports', durable=True)
-    return channel
+    try:
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(
+                host=RABBITMQ_HOST,
+                heartbeat=600,
+                blocked_connection_timeout=300
+            )
+        )
+        channel = connection.channel()
+        channel.queue_declare(queue='notifications', durable=True)
+        channel.queue_declare(queue='reports', durable=True)
+        return channel
+    except Exception as e:
+        logger.error(f"Failed to connect to RabbitMQ: {str(e)}")
+        raise
 
 # Publish message to a specific queue
 def publish_message(message, queue):
-    channel = get_rabbitmq_channel()
-    channel.basic_publish(
-        exchange='',
-        routing_key=queue,
-        body=json.dumps(message),
-        properties=pika.BasicProperties(delivery_mode=2)  
-    )
-    logger.info(f"[x] Sent to {queue}: {message}")
+    max_retries = 3
+    retry_delay = 5
+    
+    for attempt in range(max_retries):
+        try:
+            channel = get_rabbitmq_channel()
+            channel.basic_publish(
+                exchange='',
+                routing_key=queue,
+                body=json.dumps(message),
+                properties=pika.BasicProperties(delivery_mode=2)  
+            )
+            logger.info(f"[x] Sent to {queue}: {message}")
+            return
+        except Exception as e:
+            logger.error(f"Failed to publish message (attempt {attempt + 1}/{max_retries}): {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+            else:
+                raise
 
 # Health check
 @app.route('/health', methods=['GET'])
@@ -63,6 +88,24 @@ def notify_calories():
     }, queue="notifications")
 
     return jsonify({"status": "Notification sent to friends"}), 200
+
+# Notify on Leaderboard Pass
+@app.route('/notification/notify_leaderboard', methods=['POST'])
+def notify_leaderboard():
+    data = request.json
+    if not all(key in data for key in ("friends_user_ids", "userId", "name", "message", "timestamp")):
+        return jsonify({"error": "Missing data fields"}), 400
+
+    publish_message({
+        "type": "leaderboard_pass",
+        "friends_user_ids": data["friends_user_ids"],
+        "userId": data["userId"],
+        "name": data["name"],
+        "message": data["message"],
+        "timestamp": data["timestamp"]
+    }, queue="notifications")
+
+    return jsonify({"status": "Leaderboard pass notification sent"}), 200
 
 # SSE Endpoint for Real-Time Notifications
 @app.route('/notification/events')
