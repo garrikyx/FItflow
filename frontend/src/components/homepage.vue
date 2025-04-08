@@ -18,31 +18,38 @@
 
     <div class="main-content">
       <!-- Weather and Activity Section -->
-      <section class="weather-activity">
+      <section class="weather-activity"> 
         <div class="weather-card">
           <h2>Current Weather in Singapore</h2>
-          <div class="weather-info">
-            <span class="temperature">32°C</span>
-            <span class="weather-icon">☀️</span>
-            <p>Sunny, Humidity: 75%</p>
+          <div class="weather-info" v-if="weather">
+            <span class="temperature">{{ weather.temperature }}°C</span>
+            <span class="weather-icon">
+              {{ weather.condition === 'Clear' ? '☀️' : weather.condition === 'Rain' ? '🌧️' : '☁️' }}
+            </span>
+            <p>{{ weather.condition }}</p><p :style="{ fontSize: '32px',fontWeight: '600',
+                    textShadow: '1px 1px 4px rgba(0,0,0,0.4)',
+                    margin: '10px 0' }">Humidity: {{ weather.humidity }}%</p>
+          </div>
+          <div v-else>
+            <p>Loading weather data...</p>
           </div>
         </div>
-        
-        <div class="activity-recommendations">
-          <h2>Recommended Activities</h2>
-          <div class="activity-cards">
-            <div class="activity-card">
-              <div v-if="recommendation">
-                <h3>Today's Recommendation</h3>
-                <p>{{ recommendation }}</p>
+          
+          <div class="activity-recommendations">
+            <h2>Recommended Activities</h2>
+            <div class="activity-cards">
+              <div class="activity-card">
+                <div v-if="recommendation">
+                  <h3>Today's Recommendation</h3>
+                  <p>{{ recommendation }}</p>
+                </div>
+                <div v-else>
+                  <h3>Loading...</h3>
+                  <p>Getting your personalized recommendation...</p>
               </div>
-              <div v-else>
-                <h3>Loading...</h3>
-                <p>Getting your personalized recommendation...</p>
-            </div>
+              </div>
             </div>
           </div>
-        </div>
       </section>
 
       <!-- Activity Logging Section -->
@@ -78,26 +85,7 @@
             />
           </div>
 
-          <div class="form-group">
-            <label>Calories Burned</label>
-            <input 
-              type="number" 
-              v-model="activityData.calories"
-              min="1"
-              class="form-input"
-              placeholder="Enter calories burned"
-            ></input>
-          </div>
-
-          <div class="form-group">
-            <label>Intensity</label>
-            <select v-model="activityData.intensity" class="form-input">
-              <option value="">Select an Intensity</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
+      
 
           <div class="form-group">
             <label>Notes (optional)</label>
@@ -135,6 +123,57 @@
       </section>
     </div>
 
+      <!-- Activity History Section -->
+    <section class="activity-history-section">
+      <div class="history-header">
+        <h2>Your Activity History</h2>
+        <select v-model="historyFilter" class="history-filter">
+          <option value="week">This Week</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+
+      <div v-if="filteredActivities && filteredActivities.length" class="activity-history-list">
+        <div 
+          v-for="activity in filteredActivities" 
+          :key="activity.id" 
+          class="activity-item"
+        >
+          <div class="activity-main">
+            <strong>{{ activity.exerciseType }}</strong> – {{ activity.duration }} mins
+          </div>
+          <div class="activity-meta">
+            📅 {{ formatDate(activity.timestamp) }} · 🔥 {{ activity.caloriesBurned }} kcal · 
+            <span class="badge" :class="activity.intensity">
+              {{ activity.intensity === 'high' ? '💪' : activity.intensity === 'medium' ? '🏃' : '🧘' }} {{ activity.intensity }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="no-history">
+        No activities found for selected period.
+      </div>
+    </section>
+
+
+    <!-- Add toast notification -->
+    <div v-if="showToast" class="toast-notification" :class="{ 'show': showToast }">
+      <div class="toast-content">
+        <div class="toast-icon">✓</div>
+        <div class="toast-message">
+          <h4>Activity Logged Successfully!</h4>
+          <div class="activity-details">
+            <p><strong>Type:</strong> {{ toastData.type }}</p>
+            <p><strong>Duration:</strong> {{ toastData.duration }} minutes</p>
+            <p><strong>Calories Burned:</strong> {{ toastData.calories }}</p>
+            <p><strong>Intensity:</strong> {{ toastData.intensity }}</p>
+          </div>
+        </div>
+      </div>
+      <button class="toast-close" @click="closeToast">&times;</button>
+    </div>
+
     <footer class="footer">
       <p>© 2024 EcoSmart Diet. All rights reserved.</p>
     </footer>
@@ -164,12 +203,23 @@ export default {
         workouts: 0,
         calories: 0,
         minutes: 0
-      }
+      },
+      
+      showToast: false,
+      toastData: {
+        type: '',
+        duration: 0,
+        calories: 0,
+        intensity: ''
+      },
+      historyFilter: 'week',
+      allActivities: [],
     }
   }, 
 
   setup() {  
     const recommendation = ref(null)
+    const weather = ref(null)
 
     const getFitnessRecommendation = async () => {
       try {
@@ -179,7 +229,19 @@ export default {
           return;
         }
         const response = await axios.get(`http://localhost:8000/fitnessrecommendation/recommendation?userId=${user.userId}&location=Singapore`);
+        const data = response.data // ✅ YOU NEED THIS LINE
+
+        console.log('Received response from fitnessrecommendation:', data)
+
         recommendation.value = response.data.recommendation || 'No recommendation available';
+
+        if (data.weather) {
+          weather.value = {
+            temperature: data.weather.temperature,
+            condition: data.weather.condition,
+            humidity: data.weather.humidity
+          }
+        }
       } catch (error) {
         console.error('Error:', error);
         if (error.response?.status === 404) {
@@ -195,9 +257,23 @@ export default {
     })
 
     return {  
-      recommendation
+      recommendation,
+      weather
     }
   },
+
+  computed: {
+    filteredActivities() {
+        if (!this.allActivities || this.allActivities.length === 0) return []
+
+        const now = new Date()
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+        return this.historyFilter === 'week'
+          ? this.allActivities.filter(activity => new Date(activity.timestamp) >= oneWeekAgo)
+          : this.allActivities
+      }
+    },
 
   methods: {
     scrollToContent() {
@@ -205,12 +281,22 @@ export default {
       mainContent.scrollIntoView({ behavior: 'smooth' })
     },
 
+    formatDate(dateStr) {
+      const date = new Date(dateStr)
+      return date.toLocaleDateString(undefined, {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    },
+
     async getStats() {
       try {
         const user = JSON.parse(localStorage.getItem('user'))
         if (!user || !user.userId) return
 
-        const response = await axios.get(`http://localhost:8000/activitylog/activity/${user.userId}`)
+        const response = await axios.get(`http://localhost:8000/activity/${user.userId}`)
         if (response.data) {
           // Calculate weekly stats
           const now = new Date()
@@ -220,20 +306,41 @@ export default {
             const activityDate = new Date(activity.timestamp)
             return activityDate >= weekAgo
           })
+          
+          this.allActivities = response.data;
 
           this.stats = {
             workouts: weeklyActivities.length,
             calories: weeklyActivities.reduce((sum, activity) => sum + activity.caloriesBurned, 0),
             minutes: weeklyActivities.reduce((sum, activity) => sum + activity.duration, 0)
           }
+          
+          
         }
       } catch (error) {
         console.error('Error fetching stats:', error)
       }
     },
 
+    showActivityToast(activityData) {
+      this.toastData = {
+        type: activityData.exerciseType,
+        duration: activityData.duration,
+        calories: activityData.caloriesBurned,
+        intensity: activityData.intensity
+      }
+      this.showToast = true
+      setTimeout(() => {
+        this.closeToast()
+      }, 5000) // Auto close after 5 seconds
+    },
+
+    closeToast() {
+      this.showToast = false
+    },
+
     async logActivity() {
-      if (!this.activityData.type || !this.activityData.duration || !this.activityData.calories || !this.activityData.intensity) {
+      if (!this.activityData.type || !this.activityData.duration) {
         alert('Please fill in all required fields')
         return
       }
@@ -245,54 +352,101 @@ export default {
           return
         }
 
-        const response = await axios.post('http://localhost:8000/activitylog/activity', {
-          userId: user.userId,
-          exerciseType: this.activityData.type,
-          duration: parseInt(this.activityData.duration),
-          intensity: this.activityData.intensity,
-          caloriesBurned: parseInt(this.activityData.calories)
+        console.log('Starting activity logging process...')
+        console.log('User:', user.userId)
+        console.log('Activity Data:', {
+          type: this.activityData.type,
+          duration: this.activityData.duration,
+          notes: this.activityData.notes
         })
 
-        if (response.data) {
+        // First, log the activity through ActivityCoordination service
+        console.log('Sending request to ActivityCoordination service...')
+        const coordinationResponse = await axios.post('http://localhost:8000/activitycoordination/activity', {
+          userId: user.userId,
+          activityType: this.activityData.type,
+          duration: parseInt(this.activityData.duration)
+        })
+
+        console.log('ActivityCoordination response:', coordinationResponse.data)
+
+        if (coordinationResponse.data && coordinationResponse.data.code === 200) {
+          const activityData = coordinationResponse.data.data
+          console.log('Activity processed successfully:', activityData)
+
+          // Now verify the activity was logged in the activity log service
+          try {
+            console.log('Verifying activity log in database...')
+            const logResponse = await axios.get(`http://localhost:8000/activity/${user.userId}`)
+            console.log('Activity log verification response:', logResponse.data)
+
+            // The response is an array of activities
+            const activities = logResponse.data
+            if (Array.isArray(activities) && activities.length > 0) {
+              // Find the activity we just logged
+              const matchingActivity = activities.find(activity => 
+                activity.exerciseType === this.activityData.type &&
+                activity.duration === parseInt(this.activityData.duration)
+              )
+
+              if (matchingActivity) {
+                console.log('Activity successfully verified in database:', matchingActivity)
+              } else {
+                console.warn('Activity not found in database. Latest activities:', activities.slice(-3))
+              }
+            } else {
+              console.warn('No activities found in database')
+            }
+          } catch (logError) {
+            console.error('Error verifying activity log:', logError)
+            if (logError.response) {
+              console.error('Error response:', {
+                status: logError.response.status,
+                data: logError.response.data,
+                headers: logError.response.headers
+              })
+            }
+          }
+          
           // Clear form
           this.activityData = {
             type: '',
             duration: null,
-            calories: null,
-            intensity: '',
             notes: ''
           }
-          alert('Activity logged successfully!')
-          // Refresh recommendations and stats
-          this.getFitnessRecommendation()
+          
+          // Show success toast
+          this.showActivityToast(activityData.activity)
+          
+          // Refresh data
+          console.log('Refreshing recommendations and stats...')
+          //await this.getFitnessRecommendation()
+          await this.getStats()
+          console.log('Stats and recommendations refreshed')
+        } else {
+          throw new Error(coordinationResponse.data?.message || 'Failed to log activity')
         }
       } catch (error) {
-        console.error('Error logging activity:', error)
-        alert('Failed to log activity. Please try again.')
+        console.error('Error in activity logging process:', error)
+        if (error.response) {
+          console.error('Error response:', {
+            status: error.response.status,
+            data: error.response.data,
+            headers: error.response.headers
+          })
+        }
+        alert(error.message || 'Failed to log activity. Please try again.')
       }
     },
 
-    calculateIntensity(type, duration) {
-      const highIntensity = ['running', 'swimming', 'basketball', 'soccer', 'tennis']
-      const mediumIntensity = ['cycling', 'hiking', 'dancing', 'weightlifting']
-      const lowIntensity = ['walking', 'yoga']
 
-      let baseIntensity
-      if (highIntensity.includes(type)) baseIntensity = 'high'
-      else if (mediumIntensity.includes(type)) baseIntensity = 'medium'
-      else baseIntensity = 'low'
-
-      // Adjust based on duration
-      if (duration < 15) return 'low'
-      if (duration > 45) return 'high'
-      return baseIntensity
-    },
-
+    
   
   },
 
   mounted() {
     this.getStats()
+    
   }
 }
 </script>
@@ -510,6 +664,18 @@ select.form-input:focus {
   color: white;
 }
 
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.weather-icon {
+  font-size: 2rem;
+}
+
 /* Progress Section */
 .progress-cards {
   display: flex;
@@ -668,4 +834,114 @@ h1, h2, h3, p {
   transform: translateY(1px);
   box-shadow: none;
 }
+
+/* toast notif*/
+.toast-notification {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #333;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 300px;
+  animation: slideUp 0.4s ease-out;
+}
+
+.toast-icon {
+  font-size: 24px;
+  color: #42b983;
+}
+
+.toast-message h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.toast-message p {
+  font-size: 14px;
+  margin: 4px 0 0;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  margin-left: auto;
+  cursor: pointer;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* history*/
+.activity-history-section {
+  margin-top: 50px;
+  background: #444;
+  padding: 30px;
+  border-radius: 15px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.history-filter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+}
+
+.activity-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.activity-item {
+  background: #333;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: white;
+  border: 1px solid #555;
+  font-size: 0.95rem;
+}
+
+.no-history {
+  color: #aaa;
+  text-align: center;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+.badge {
+  background: #42b983;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+
 </style>
