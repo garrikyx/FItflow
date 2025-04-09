@@ -104,7 +104,6 @@ export default {
   data() {
     return {
       leaderboardData: [],
-      friendsLeaderboardData: [],
       loading: true,
       error: null,
       currentUser: null,
@@ -113,7 +112,8 @@ export default {
       showNotificationPopup: false,
       latestNotification: null,
       userPreviousRank: null,
-      eventSource: null
+      eventSource: null,
+      refreshInterval: null
     }
   },
   computed: {
@@ -121,7 +121,7 @@ export default {
       return this.currentUser?.userId;
     },
     displayData() {
-      // Both tabs show the same filtered data now
+      // Return the filtered data
       return this.leaderboardData;
     },
     monthlyStats() {
@@ -146,30 +146,6 @@ export default {
     }
   },
   methods: {
-    async fetchFriendIds() {
-      try {
-        if (!this.currentUser || !this.currentUser.userId) {
-          console.log('No user ID available to fetch friends');
-          return [];
-        }
-        
-        // Call the external friendship API
-        const response = await axios.get(`https://personal-ywco1luc.outsystemscloud.com/SocialsService/rest/FriendAPI/Friends/${this.currentUser.userId}`);
-        
-        console.log('Friends response:', response.data);
-        
-        // Extract friend IDs from the response
-        // Adapt this based on the actual response structure
-        const friendIds = response.data.map(friend => friend.FriendId.toString());
-        
-        console.log('Friend IDs:', friendIds);
-        return friendIds;
-      } catch (error) {
-        console.error('Error fetching friends:', error);
-        return [];
-      }
-    },
-    
     async fetchLeaderboardData() {
       try {
         this.loading = true;
@@ -182,50 +158,36 @@ export default {
           return;
         }
 
-        // Get friend IDs first
-        const friendIds = await this.fetchFriendIds();
-        console.log('Friend IDs for filtering:', friendIds);
-        
-        // Add the current user's ID to the allowed IDs
-        const allowedUserIds = [...friendIds, this.currentUser.userId];
+        // Store previous rank before updating data
+        this.storePreviousRank();
 
-        // Get weekly leaderboard data
+        // Get weekly leaderboard data - this includes friends data already filtered on the backend
         const weeklyResponse = await axios.get(`http://localhost:8000/leaderboard/weekly`);
         console.log('Weekly leaderboard response:', weeklyResponse.data);
         
         if (weeklyResponse.data?.code === 200) {
           const entries = weeklyResponse.data.data.entries;
           
-          // Filter to only include friends and the current user
-          const filteredEntries = entries.filter(entry => 
-            allowedUserIds.includes(entry.user_id)
-          );
-          
-          // Fetch user names for each entry
-          for (let entry of filteredEntries) {
-            try {
-              const userResponse = await axios.get(`http://localhost:8000/user/${entry.user_id}`);
-              if (userResponse.data?.data?.name) {
-                entry.display_name = userResponse.data.data.name;
+          // Fetch user names for each entry if not already present
+          for (let entry of entries) {
+            if (!entry.display_name) {
+              try {
+                const userResponse = await axios.get(`http://localhost:8000/user/${entry.user_id}`);
+                if (userResponse.data?.data?.name) {
+                  entry.display_name = userResponse.data.data.name;
+                }
+              } catch (error) {
+                console.warn(`Could not fetch name for user ${entry.user_id}:`, error);
+                entry.display_name = entry.user_id;
               }
-            } catch (error) {
-              console.warn(`Could not fetch name for user ${entry.user_id}:`, error);
-              entry.display_name = entry.user_id;
             }
           }
           
-          // Store previous rank before updating data
-          this.storePreviousRank();
-          
-          this.leaderboardData = filteredEntries;
-          
-          // Check for rank changes after updating data
-          this.checkRankChanges();
+          this.leaderboardData = entries;
         }
 
-        // No need to fetch separate friends leaderboard since we're already filtering
-        // Just use the same data for both tabs
-        this.friendsLeaderboardData = [...this.leaderboardData];
+        // Check for rank changes after updating data
+        this.checkRankChanges();
       } catch (error) {
         console.error('Error fetching leaderboard data:', error);
         this.error = 'Failed to load leaderboard data. Please try again later.';
@@ -235,17 +197,18 @@ export default {
     },
     
     storePreviousRank() {
-      if (this.currentUser && this.leaderboardData.length > 0) {
-        const currentUserIndex = this.leaderboardData.findIndex(
-          entry => entry.user_id === this.currentUser.userId
-        );
-        if (currentUserIndex !== -1) {
-          this.userPreviousRank = currentUserIndex + 1;
-        }
+      if (!this.currentUser || this.leaderboardData.length === 0) return;
+      
+      const currentUserIndex = this.leaderboardData.findIndex(
+        entry => entry.user_id === this.currentUser.userId
+      );
+      
+      if (currentUserIndex !== -1) {
+        this.userPreviousRank = currentUserIndex + 1;
       }
     },
     
-    async checkRankChanges() {
+    checkRankChanges() {
       if (!this.userPreviousRank || !this.currentUser) return;
       
       const currentUserIndex = this.leaderboardData.findIndex(
@@ -255,46 +218,16 @@ export default {
       if (currentUserIndex !== -1) {
         const currentRank = currentUserIndex + 1;
         
-        if (currentRank > this.userPreviousRank) {
-          // User has been surpassed
-          const potentiallySurpassingUsers = this.leaderboardData
-            .filter((entry, index) => 
-              index + 1 < currentRank && 
-              index + 1 >= this.userPreviousRank && 
-              entry.user_id !== this.currentUser.userId
-            );
-          
-          if (potentiallySurpassingUsers.length > 0) {
-            // Fetch friend IDs to filter only friends
-            const friendIds = await this.fetchFriendIds();
-            
-            // Filter surpassing users to only include friends
-            const surpassingFriends = potentiallySurpassingUsers
-              .filter(user => friendIds.includes(user.user_id))
-              .map(user => user.display_name || user.user_id);
-            
-            // Only show notification if friends surpassed the user
-            if (surpassingFriends.length > 0) {
-              this.showRankChangeNotification(surpassingFriends, currentRank);
-              this.sendNotificationToService(surpassingFriends, currentRank);
-            }
-          }
+        // No need to manually send notifications or check for rank changes
+        // This will be handled by the ActivityCoordination service
+        // We just update our local state to reflect the new rank
+        if (currentRank !== this.userPreviousRank) {
+          console.log(`Rank changed from ${this.userPreviousRank} to ${currentRank}`);
         }
       }
     },
     
-    showRankChangeNotification(users, newRank) {
-      const userNames = users.join(', ');
-      const message = users.length === 1 
-        ? `${userNames} has surpassed you! You're now ranked #${newRank}.` 
-        : `${userNames} have surpassed you! You're now ranked #${newRank}.`;
-      
-      const notification = {
-        id: Date.now(),
-        message: message,
-        timestamp: new Date().toISOString()
-      };
-      
+    showNotification(notification) {
       this.latestNotification = notification;
       this.notifications.unshift(notification);
       this.showNotificationPopup = true;
@@ -303,33 +236,6 @@ export default {
       setTimeout(() => {
         this.showNotificationPopup = false;
       }, 8000);
-    },
-    
-    async sendNotificationToService(surpassingFriends, newRank) {
-      if (!this.currentUser) return;
-      
-      try {
-        const userNames = surpassingFriends.join(', ');
-        const message = surpassingFriends.length === 1 
-          ? `${userNames} has surpassed you! You're now ranked #${newRank}.` 
-          : `${userNames} have surpassed you! You're now ranked #${newRank}.`;
-        
-        // Get friend IDs
-        const friendIds = await this.fetchFriendIds();
-        
-        // Send to notification service
-        await axios.post('http://localhost:8000/notification/notify_leaderboard', {
-          friends_user_ids: [this.currentUser.userId], // Only notify current user
-          userId: surpassingFriends[0], // ID of user who surpassed
-          name: surpassingFriends[0], // Name of user who surpassed
-          message: message,
-          timestamp: new Date().toISOString()
-        });
-        
-        console.log('Leaderboard notification sent to service');
-      } catch (error) {
-        console.error('Failed to send notification to service:', error);
-      }
     },
     
     setupNotifications() {
@@ -350,7 +256,12 @@ export default {
     },
     
     connectToNotificationStream() {
-      // Use the correct notification service endpoint
+      // Close any existing connection
+      if (this.eventSource) {
+        this.eventSource.close();
+      }
+      
+      // Connect to the notification stream
       this.eventSource = new EventSource('http://localhost:8000/notification/events');
       
       this.eventSource.onmessage = (event) => {
@@ -359,7 +270,7 @@ export default {
           console.log('Received notification:', data);
           
           // Check if this notification is relevant to the current user
-          if (data.type === 'leaderboard_pass' && data.friends_user_ids.includes(this.currentUser.userId)) {
+          if (data.friends_user_ids && data.friends_user_ids.includes(this.currentUser.userId)) {
             // Display the notification
             const notification = {
               id: Date.now(),
@@ -367,14 +278,10 @@ export default {
               timestamp: data.timestamp
             };
             
-            this.latestNotification = notification;
-            this.notifications.unshift(notification);
-            this.showNotificationPopup = true;
+            this.showNotification(notification);
             
-            // Auto-hide after 8 seconds
-            setTimeout(() => {
-              this.showNotificationPopup = false;
-            }, 8000);
+            // Refresh leaderboard data when notification is received
+            this.fetchLeaderboardData();
           }
         } catch (error) {
           console.error('Error processing notification:', error);
@@ -416,10 +323,14 @@ export default {
     },
     
     calculateTotalDuration() {
+      // You could fetch this from an API or calculate it from activity data
+      // For now, we'll return a placeholder value
       return 120; // minutes
     },
     
     calculateTotalActivities() {
+      // You could fetch this from an API or calculate it from activity data
+      // For now, we'll return a placeholder value
       return 8; // activities
     }
   },
@@ -432,8 +343,8 @@ export default {
       this.fetchLeaderboardData();
     }, 30000);
   },
-  beforeDestroy() {
-    // Clear intervals and close connections
+  beforeUnmount() {
+    // Clean up resources
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }

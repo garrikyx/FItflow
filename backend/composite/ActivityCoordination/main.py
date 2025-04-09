@@ -119,7 +119,7 @@ def coordinate_activity():
                     "message": f"{user_name} just passed you on the leaderboard!",
                     "timestamp": datetime.now().isoformat()
                 }
-                requests.post(f"{NOTIFICATION_SERVICE_URL}/notify_calories", json=notify_payload)
+                requests.post(f"{NOTIFICATION_SERVICE_URL}/notification/notify_calories", json=notify_payload)
             except Exception as notify_error:
                 logger.error(f"Notification failed: {str(notify_error)}")
 

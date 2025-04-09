@@ -89,23 +89,6 @@ def notify_calories():
 
     return jsonify({"status": "Notification sent to friends"}), 200
 
-# Notify on Leaderboard Pass
-@app.route('/notification/notify_leaderboard', methods=['POST'])
-def notify_leaderboard():
-    data = request.json
-    if not all(key in data for key in ("friends_user_ids", "userId", "name", "message", "timestamp")):
-        return jsonify({"error": "Missing data fields"}), 400
-
-    publish_message({
-        "type": "leaderboard_pass",
-        "friends_user_ids": data["friends_user_ids"],
-        "userId": data["userId"],
-        "name": data["name"],
-        "message": data["message"],
-        "timestamp": data["timestamp"]
-    }, queue="notifications")
-
-    return jsonify({"status": "Leaderboard pass notification sent"}), 200
 
 # SSE Endpoint for Real-Time Notifications
 @app.route('/notification/events')
