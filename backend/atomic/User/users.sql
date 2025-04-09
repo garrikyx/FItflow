@@ -49,9 +49,7 @@ INSERT INTO `users` (`user_id`, `email`, `name`, `password`, `weight`, `goal`) V
 ('6', 'zephanchin@gmail.com', 'Zephan', '123123', 80, 'gain'),
 ('7', 'estrella@example.com', 'Estrella', '1234', 80, 'lose'),
 ('8', 'shervonne@example.com', 'Shervonne', '1234', 80, 'lose'),
-('10', 'jn.tjong.2023@scis.smu.edu.sg', 'Tjong Jia Ning', '1234', 65, 'lose'),
-('11', 'chris.poskitt@example.com', 'Chris Poskitt', '1234', 80, 'gain'),
-('12', 'zavier.tan@example.com', 'Zavier Tan', '1234', 80, 'lose');
+('10', 'jn.tjong.2023@scis.smu.edu.sg', 'Tjong Jia Ning', '1234', 65, 'lose');
 
 --
 -- Indexes for dumped tables

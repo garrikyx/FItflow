@@ -49,10 +49,10 @@ def monthly_report():
             total_duration = sum(a["duration"] for a in recent_activities)
 
             # Step 3: Send email
-        html_content = f"""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
+            html_content = f"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
             <meta charset="UTF-8">
             <style>
                 body {{
@@ -102,9 +102,9 @@ def monthly_report():
                     font-size: 12px;
                 }}
             </style>
-        </head>
-        <body>
-            <div class="container">
+            </head>
+            <body>
+                <div class="container">
                 <div class="header">
                     <h1>Your Monthly Activity Report</h1>
                 </div>
@@ -125,20 +125,20 @@ def monthly_report():
                     <p>Keep pushing forward! 💪 Your FitFlow Team</p>
                 </div>
             </div>
-        </body>
-        </html>
-        """
-        message = Mail(
-                from_email='ecosmart.diet@gmail.com',
-                to_emails=email,
-                subject='Your Monthly Activity Report 💡',
-                plain_text_content=f"{name}, you exercised for {total_duration} minutes and burned {total_calories} calories this month!",
-                html_content=html_content
-            )
+            </body>
+            </html>
+            """
+            message = Mail(
+                    from_email='ecosmart.diet@gmail.com',
+                    to_emails=email,
+                    subject='Your Monthly Activity Report 💡',
+                    plain_text_content=f"{name}, you exercised for {total_duration} minutes and burned {total_calories} calories this month!",
+                    html_content=html_content
+                )
 
-        sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
-        response = sg.send(message)
-        print(f"Email sent to {email} with status: {response.status_code}")
+            sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+            response = sg.send(message)
+            print(f"Email sent to {email} with status: {response.status_code}")
 
     except Exception as e:
         print(f"Error in monthly report: {e}")
@@ -301,8 +301,8 @@ def health():
 
 if __name__ == '__main__':
     scheduler = BackgroundScheduler(timezone=timezone("Asia/Singapore"))
-    trigger = CronTrigger(day=30, hour=0, minute=0)  # Real monthly trigger
-    # trigger = CronTrigger(minute='*/10')  # For testing every 10 minutes
+    # trigger = CronTrigger(day=30, hour=0, minute=0)  # Real monthly trigger
+    trigger = CronTrigger(minute='*/15')  # For testing every 15 minutes
     scheduler.add_job(monthly_report, trigger)
     print("Scheduler started...")
     scheduler.start()
