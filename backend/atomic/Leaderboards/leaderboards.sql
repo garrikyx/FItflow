@@ -18,9 +18,11 @@ CREATE TABLE IF NOT EXISTS `leaderboards` (
 
 
 -- Insert some sample data for testing
+
 INSERT INTO leaderboards (user_id, calories_burned, activity_type, timestamp) VALUES
-('4', 250.5, 'running', '2023-03-25 10:30:00'),
-('6', 180.2, 'cycling', '2023-03-25 11:15:00'),
-('7', 320.7, 'swimming', '2023-03-25 14:45:00'),
-('4', 150.3, 'walking', '2023-03-26 09:20:00'),
-('10', 280.1, 'running', '2023-03-26 16:30:00'); 
+('4', 120, 'yoga', '2025-04-07 17:24:26'),
+('5', 400, 'cycling', '2025-04-07 08:15:00'),
+('6', 600, 'swimming', '2025-04-07 18:30:00'),
+('7', 120, 'yoga', '2025-04-08 07:00:00'),
+('8', 350, 'running', '2025-04-08 18:45:00'),
+('10', 200, 'jogging', '2025-04-08 19:00:00');
