@@ -44,8 +44,7 @@ CREATE TABLE `activitylog` (
 --
 
 INSERT INTO `activitylog` (`id`, `userId`, `exerciseType`, `duration`, `intensity`, `caloriesBurned`, `timestamp`) VALUES
-
-(1, '4', 'yoga', 30, 'low', 120, '2025-04-07 17:24:26'),
+(1, '4', 'yoga', 30, 'low', 120, '2025-03-26 17:24:26'),
 (2, '5', 'yoga', 30, 'low', 120, '2025-03-26 17:35:15'),
 (3, '6', 'Run', 30, 'low', 120, '2025-03-26 17:43:22'),
 (4, '7', 'walk', 40, 'low', 320, '2025-03-26 17:43:36'),
@@ -57,12 +56,7 @@ INSERT INTO `activitylog` (`id`, `userId`, `exerciseType`, `duration`, `intensit
 (10, '4', 'running', 40, 'low', 320, '2025-03-26 17:57:12'),
 (11, '4', 'jogging', 40, 'low', 320, '2025-03-26 17:57:15'),
 (12, '4', 'studying', 40, 'low', 320, '2025-03-26 17:57:19'),
-(13, '4', 'studying', 40, 'low', 320, '2025-03-26 18:00:39'),
-(14, '5', 'cycling', 45, 'medium', 400, '2025-04-07 08:15:00'),
-(15, '6', 'swimming', 60, 'high', 600, '2025-04-07 18:30:00'),
-(16, '7', 'yoga', 30, 'low', 120, '2025-04-08 07:00:00'),
-(17, '8', 'running', 35, 'medium', 350, '2025-04-08 18:45:00'),
-(18, '10', 'jogging', 30, 'low', 200, '2025-04-08 19:00:00');
+(13, '4', 'studying', 40, 'low', 320, '2025-03-26 18:00:39');
 
 --
 -- Indexes for dumped tables
